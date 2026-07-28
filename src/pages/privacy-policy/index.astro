@@ -1,0 +1,36 @@
+---
+export const prerender = true;
+import Layout from '../../layouts/Layout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+
+const title = 'Privacy Policy | JobVacancy.co.ke';
+const description = 'How JobVacancy.co.ke collects, uses and protects your information.';
+---
+
+<Layout title={title} description={description} path="/privacy-policy/" noindex>
+  <Breadcrumbs items={[{ name: 'Home', href: '/' }, { name: 'Privacy Policy' }]} />
+  <div class="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+    <h1 class="text-3xl font-extrabold text-brand-dark">Privacy Policy</h1>
+    <p class="mt-2 text-sm text-slate-400">Last updated: {new Date().toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+    <div class="prose prose-slate mt-6 max-w-none space-y-4 text-slate-700">
+      <h2 class="text-xl font-bold text-brand-dark">What we collect</h2>
+      <p>
+        When you post a job, we collect the job details you submit and the contact name/email you provide for
+        verification purposes. When you apply to a job, we do not process your application — applications go
+        directly to the employer via the email or link they provided.
+      </p>
+      <h2 class="text-xl font-bold text-brand-dark">How we use it</h2>
+      <p>
+        Submitted job details are reviewed and, once approved, published publicly on the site. Contact information
+        provided by employers is used only to verify listings and is never published or sold.
+      </p>
+      <h2 class="text-xl font-bold text-brand-dark">Cookies &amp; analytics</h2>
+      <p>
+        We may use basic, privacy-respecting analytics to understand how the site is used. We do not sell personal
+        data to third parties.
+      </p>
+      <h2 class="text-xl font-bold text-brand-dark">Contact</h2>
+      <p>Questions about this policy? Email <a href="mailto:hello@jobvacancy.co.ke" class="font-semibold text-brand-orange">hello@jobvacancy.co.ke</a>.</p>
+    </div>
+  </div>
+</Layout>

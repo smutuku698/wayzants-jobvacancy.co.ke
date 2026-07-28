@@ -1,0 +1,64 @@
+@import 'tailwindcss';
+
+/*
+ * Palette ported 1:1 from the original SpedCentral (Wyzant-style) template
+ * at speedcentral-replica-main/src/styles.css — same oklch values, same
+ * brand-orange/green/yellow/dark/cream/highlight roles.
+ */
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  --color-cream: oklch(0.975 0.012 85);
+  --color-brand-orange: oklch(0.72 0.19 45);
+  --color-brand-orange-dark: oklch(0.62 0.19 45);
+  --color-brand-green: oklch(0.78 0.17 130);
+  --color-brand-green-dark: oklch(0.58 0.15 130);
+  --color-brand-yellow: oklch(0.88 0.15 95);
+  --color-brand-dark: oklch(0.22 0.02 250);
+  --color-highlight: oklch(0.87 0.19 130);
+  --color-border: oklch(0.9 0.01 90);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-white text-brand-dark/80 antialiased;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply text-brand-dark font-bold tracking-tight;
+  }
+  a {
+    @apply transition-colors;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-brand-orange px-5 py-2.5 font-semibold text-white shadow-sm transition hover:opacity-90;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-brand-green bg-white px-5 py-2.5 font-semibold text-brand-green hover:bg-brand-green hover:text-brand-dark;
+  }
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold;
+  }
+  .card {
+    @apply rounded-xl border border-border bg-white shadow-sm;
+  }
+}
+
+/* Named to avoid colliding with Tailwind's auto-generated `text-highlight`
+   color utility (from the --color-highlight theme token), which sets
+   `color` rather than `background-color` and silently made this text
+   invisible when both rules applied to the same element. */
+@utility highlight-mark {
+  background-color: var(--color-highlight);
+  color: var(--color-brand-dark);
+  padding: 0 0.35rem;
+  border-radius: 2px;
+}

@@ -1,0 +1,36 @@
+---
+export const prerender = true;
+import Layout from '../../layouts/Layout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+
+const title = 'About Us | JobVacancy.co.ke';
+const description = 'JobVacancy.co.ke is Kenya\'s job board for NGO, government, teaching, TSC and online jobs.';
+---
+
+<Layout title={title} description={description} path="/about/">
+  <Breadcrumbs items={[{ name: 'Home', href: '/' }, { name: 'About Us' }]} />
+  <div class="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+    <h1 class="text-3xl font-extrabold text-brand-dark">About JobVacancy.co.ke</h1>
+    <div class="prose prose-slate mt-6 max-w-none space-y-4 text-slate-700">
+      <p>
+        JobVacancy.co.ke was built for one purpose: to make it fast and easy for Kenyans to find real, relevant
+        work — and for employers to reach them without the noise. We focus on the categories that matter most to
+        the Kenyan job market: NGO jobs, government jobs, teaching and TSC vacancies, and the growing world of
+        online and remote work.
+      </p>
+      <p>
+        Every job on this site is organised by category and location — from Nairobi and Mombasa to Kisumu, Eldoret
+        and Nakuru — so you can go straight to the roles that matter to you. We also feature international remote
+        jobs: 100% virtual roles you can do from anywhere in Kenya, with no relocation required.
+      </p>
+      <p>
+        Employers can post a job for free. Every listing is reviewed by our team before it goes live, which keeps
+        the board free of spam and low-quality postings — good for job seekers, and good for employers who want
+        their vacancy to be taken seriously.
+      </p>
+      <p>
+        Have feedback or a partnership idea? <a href="/contact/" class="font-semibold text-brand-orange">Get in touch</a>.
+      </p>
+    </div>
+  </div>
+</Layout>

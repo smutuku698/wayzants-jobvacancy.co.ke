@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "jobvacancy-co-ke",
+  "compatibility_date": "2025-11-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "r2_buckets": [
+    {
+      "binding": "JOB_IMAGES",
+      "bucket_name": "jobvacancy-images"
+    }
+  ],
+  "vars": {
+    "PUBLIC_SITE_URL": "https://www.jobvacancy.co.ke",
+    "PUBLIC_SUPABASE_URL": "https://awwdgptkywabywixhcry.supabase.co",
+    "PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_Q-2GQpP_UsHiAhe884wQPw_d3lAZjRk",
+    "PUBLIC_R2_PUBLIC_URL": "https://images.jobvacancy.co.ke"
+  }
+}

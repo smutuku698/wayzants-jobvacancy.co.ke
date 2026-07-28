@@ -1,0 +1,13 @@
+{
+  "name": "JobVacancy.co.ke",
+  "short_name": "JobVacancy",
+  "description": "Find the latest jobs in Kenya — NGO, government, teaching, TSC and online jobs.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1C2331",
+  "theme_color": "#1C2331",
+  "icons": [
+    { "src": "/favicon-32.png", "sizes": "32x32", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

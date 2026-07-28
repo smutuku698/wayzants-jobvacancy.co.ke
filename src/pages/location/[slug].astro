@@ -1,0 +1,55 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import JobCard from '../../components/JobCard.astro';
+import Pagination from '../../components/Pagination.astro';
+import { getLocationBySlug, getApprovedJobs } from '../../lib/queries';
+import { getLocationContent } from '../../lib/content';
+import { breadcrumbJsonLd, SITE_URL } from '../../lib/seo';
+
+const { slug } = Astro.params;
+const location = slug ? await getLocationBySlug(slug).catch(() => null) : null;
+
+if (!location) {
+  return Astro.rewrite('/404');
+}
+
+const url = Astro.url;
+const page = Math.max(1, Number(url.searchParams.get('page') ?? '1') || 1);
+const result = await getApprovedJobs({ locationSlug: location.slug, page }).catch(() => ({
+  jobs: [],
+  total: 0,
+  page: 1,
+  pageSize: 20,
+}));
+const totalPages = Math.max(1, Math.ceil(result.total / result.pageSize));
+const copy = getLocationContent(location.slug, location.name);
+
+const jsonLd = breadcrumbJsonLd([
+  { name: 'Home', url: SITE_URL },
+  { name: 'Locations', url: `${SITE_URL}/jobs/` },
+  { name: location.name, url: `${SITE_URL}/location/${location.slug}/` },
+]);
+---
+
+<Layout title={copy.metaTitle} description={copy.metaDescription} path={`/location/${location.slug}/`} jsonLd={jsonLd}>
+  <Breadcrumbs items={[{ name: 'Home', href: '/' }, { name: 'Locations', href: '/jobs/' }, { name: location.name }]} />
+
+  <div class="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+    <h1 class="text-2xl font-extrabold text-brand-dark sm:text-3xl">{copy.h1}</h1>
+    <p class="mt-2 max-w-2xl text-slate-600">{copy.intro}</p>
+    <p class="mt-3 text-sm font-semibold text-slate-500">{result.total} open role{result.total === 1 ? '' : 's'}</p>
+
+    {result.jobs.length > 0 ? (
+      <div class="mt-6 grid grid-cols-1 gap-4">
+        {result.jobs.map((job) => <JobCard job={job} />)}
+      </div>
+    ) : (
+      <div class="card mt-6 p-10 text-center text-slate-500">
+        <p class="font-semibold text-brand-dark">No jobs in {location.name} right now.</p>
+        <p class="mt-1 text-sm">New jobs are posted daily — check back soon, or browse <a href="/jobs/" class="font-semibold text-brand-orange">all open jobs</a>.</p>
+      </div>
+    )}
+    <Pagination page={result.page} totalPages={totalPages} basePath={`/location/${location.slug}/`} searchParams={url.searchParams} />
+  </div>
+</Layout>

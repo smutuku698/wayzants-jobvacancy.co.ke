@@ -1,0 +1,146 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import { getCategories, getLocations } from '../../lib/queries';
+import { JOB_TYPE_LABELS } from '../../lib/types';
+
+const [categories, locations] = await Promise.all([
+  getCategories().catch(() => []),
+  getLocations().catch(() => []),
+]);
+
+const error = Astro.url.searchParams.get('error');
+const ERROR_MESSAGES: Record<string, string> = {
+  missing_fields: 'Please fill in all required fields and try again.',
+  invalid_logo: 'Your logo must be a JPG, PNG or WEBP image under 2MB.',
+  server_error: 'Something went wrong on our end. Please try again in a moment.',
+};
+
+const title = 'Post a Job in Kenya — Free Job Listing | JobVacancy.co.ke';
+const description =
+  'Post a job in Kenya for free. Reach job seekers across Nairobi, Mombasa, Kisumu and beyond. Every listing is reviewed before it goes live.';
+---
+
+<Layout title={title} description={description} path="/post-a-job/">
+  <Breadcrumbs items={[{ name: 'Home', href: '/' }, { name: 'Post a Job' }]} />
+
+  <div class="mx-auto max-w-3xl px-4 py-8 sm:px-6">
+    <h1 class="text-2xl font-extrabold text-brand-dark sm:text-3xl">Post a Job — 100% Free</h1>
+    <p class="mt-2 text-slate-600">
+      Reach thousands of job seekers across Kenya. Every submission is reviewed by our team before it goes live,
+      usually within 24 hours.
+    </p>
+
+    {error && (
+      <div class="mt-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        {ERROR_MESSAGES[error] ?? ERROR_MESSAGES.server_error}
+      </div>
+    )}
+
+    <form method="post" action="/api/jobs/submit" enctype="multipart/form-data" class="card mt-6 space-y-6 p-6 sm:p-8">
+      <fieldset class="space-y-4">
+        <legend class="text-sm font-bold uppercase tracking-wide text-slate-500">Job Details</legend>
+        <div>
+          <label for="title" class="mb-1.5 block text-sm font-semibold text-brand-dark">Job Title *</label>
+          <input id="title" name="title" type="text" required placeholder="e.g. Programme Officer" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+        </div>
+        <div>
+          <label for="company_name" class="mb-1.5 block text-sm font-semibold text-brand-dark">Company / Organisation Name *</label>
+          <input id="company_name" name="company_name" type="text" required class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+        </div>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label for="category_id" class="mb-1.5 block text-sm font-semibold text-brand-dark">Category *</label>
+            <select id="category_id" name="category_id" required class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange">
+              <option value="">Select a category</option>
+              {categories.map((c) => <option value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label for="job_type" class="mb-1.5 block text-sm font-semibold text-brand-dark">Job Type *</label>
+            <select id="job_type" name="job_type" required class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange">
+              {Object.entries(JOB_TYPE_LABELS).map(([value, label]) => <option value={value}>{label}</option>)}
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label for="location_id" class="mb-1.5 block text-sm font-semibold text-brand-dark">Location *</label>
+            <select id="location_id" name="location_id" required class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange">
+              <option value="">Select a location</option>
+              {locations.map((l) => <option value={l.id}>{l.name}</option>)}
+            </select>
+          </div>
+          <div class="flex flex-col justify-end gap-2 pb-1">
+            <label class="flex items-center gap-2 text-sm text-brand-dark">
+              <input type="checkbox" name="is_remote" value="1" class="h-4 w-4 rounded border-slate-300 text-brand-orange focus:ring-brand-orange" />
+              This role is remote / online
+            </label>
+            <label class="flex items-center gap-2 text-sm text-brand-dark">
+              <input type="checkbox" name="is_international" value="1" class="h-4 w-4 rounded border-slate-300 text-brand-orange focus:ring-brand-orange" />
+              International (100% virtual) role
+            </label>
+          </div>
+        </div>
+        <div>
+          <label for="description" class="mb-1.5 block text-sm font-semibold text-brand-dark">Job Description *</label>
+          <textarea id="description" name="description" required rows="8" placeholder="Responsibilities, requirements, qualifications, how to apply..." class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange"></textarea>
+        </div>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div>
+            <label for="salary_min" class="mb-1.5 block text-sm font-semibold text-brand-dark">Min Salary (KES)</label>
+            <input id="salary_min" name="salary_min" type="number" min="0" placeholder="Optional" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+          </div>
+          <div>
+            <label for="salary_max" class="mb-1.5 block text-sm font-semibold text-brand-dark">Max Salary (KES)</label>
+            <input id="salary_max" name="salary_max" type="number" min="0" placeholder="Optional" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+          </div>
+          <div>
+            <label for="deadline" class="mb-1.5 block text-sm font-semibold text-brand-dark">Application Deadline</label>
+            <input id="deadline" name="deadline" type="date" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+          </div>
+        </div>
+        <div>
+          <label for="logo" class="mb-1.5 block text-sm font-semibold text-brand-dark">Company Logo</label>
+          <input id="logo" name="logo" type="file" accept="image/png,image/jpeg,image/webp" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none file:mr-3 file:rounded-md file:border-0 file:bg-cream file:px-3 file:py-1.5 file:text-sm focus:border-brand-orange" />
+          <p class="mt-1 text-xs text-slate-400">JPG, PNG or WEBP, up to 2MB. Optional.</p>
+        </div>
+      </fieldset>
+
+      <fieldset class="space-y-4 border-t border-slate-100 pt-6">
+        <legend class="text-sm font-bold uppercase tracking-wide text-slate-500">How to Apply</legend>
+        <div class="flex gap-6 text-sm">
+          <label class="flex items-center gap-2 text-brand-dark">
+            <input type="radio" name="application_method" value="email" checked required class="h-4 w-4 text-brand-orange focus:ring-brand-orange" />
+            Email
+          </label>
+          <label class="flex items-center gap-2 text-brand-dark">
+            <input type="radio" name="application_method" value="url" required class="h-4 w-4 text-brand-orange focus:ring-brand-orange" />
+            Application link
+          </label>
+        </div>
+        <div>
+          <label for="application_value" class="mb-1.5 block text-sm font-semibold text-brand-dark">Application Email or URL *</label>
+          <input id="application_value" name="application_value" type="text" required placeholder="jobs@company.com or https://company.com/apply" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+        </div>
+      </fieldset>
+
+      <fieldset class="space-y-4 border-t border-slate-100 pt-6">
+        <legend class="text-sm font-bold uppercase tracking-wide text-slate-500">Your Contact Details</legend>
+        <p class="text-xs text-slate-400">Not published — used only if we need to verify this listing.</p>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label for="contact_name" class="mb-1.5 block text-sm font-semibold text-brand-dark">Your Name</label>
+            <input id="contact_name" name="contact_name" type="text" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+          </div>
+          <div>
+            <label for="contact_email" class="mb-1.5 block text-sm font-semibold text-brand-dark">Your Email *</label>
+            <input id="contact_email" name="contact_email" type="email" required class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+          </div>
+        </div>
+      </fieldset>
+
+      <button type="submit" class="btn-primary w-full !py-3 text-base">Submit for Review</button>
+    </form>
+  </div>
+</Layout>

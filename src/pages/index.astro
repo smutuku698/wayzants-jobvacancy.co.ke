@@ -1,0 +1,339 @@
+---
+import Layout from '../layouts/Layout.astro';
+import JobCard from '../components/JobCard.astro';
+import CategoryCard from '../components/CategoryCard.astro';
+import FeaturedJobCard from '../components/FeaturedJobCard.astro';
+import { getLatestJobs } from '../lib/queries';
+import { NAV_CATEGORIES, NAV_LOCATIONS } from '../lib/taxonomy';
+import tutor1 from '../assets/tutor1.jpg';
+import tutor2 from '../assets/tutor2.jpg';
+import tutor3 from '../assets/tutor3.jpg';
+import tutor4 from '../assets/tutor4.jpg';
+import review1 from '../assets/review1.jpg';
+import review2 from '../assets/review2.jpg';
+import review3 from '../assets/review3.jpg';
+import review4 from '../assets/review4.jpg';
+import onlineLessons from '../assets/online-lessons.jpg';
+
+const allJobs = await getLatestJobs(12).catch(() => []);
+const featuredJobs = allJobs.slice(0, 6);
+const latestJobs = allJobs.slice(6).length > 0 ? allJobs.slice(6) : allJobs;
+const FEATURED_ACCENTS = ['pink', 'purple', 'green', 'orange', 'teal', 'amber'] as const;
+
+const trending = [
+  { name: 'NGO Jobs', href: '/category/ngo-jobs/' },
+  { name: 'TSC Jobs', href: '/category/tsc-jobs/' },
+  { name: 'Government Jobs', href: '/category/government-jobs/' },
+  { name: 'Teaching Jobs', href: '/category/teaching-jobs/' },
+  { name: 'Nairobi', href: '/location/nairobi/' },
+  { name: 'Online Jobs', href: '/category/online-remote-jobs/' },
+  { name: 'Internships', href: '/category/internships-graduate-trainee/' },
+];
+
+const sectors = [
+  'NGO & Development',
+  'Government & Public Service',
+  'Teaching & TSC',
+  'IT & Software',
+  'Healthcare',
+  'Online & Remote',
+];
+
+const valueProps = [
+  {
+    title: 'Free for job seekers',
+    body: 'Browsing and applying is always free — no hidden fees, no subscriptions, no catches.',
+    tint: 'bg-brand-orange/10',
+    accent: 'text-brand-orange',
+    photo: review1.src,
+    audience: 'For Job Seekers',
+  },
+  {
+    title: 'Post a job in minutes',
+    body: 'Free to publish, straightforward form, and your listing reaches job seekers across Kenya.',
+    tint: 'bg-brand-green/15',
+    accent: 'text-brand-green-dark',
+    photo: review2.src,
+    audience: 'For Employers',
+  },
+  {
+    title: 'Every listing is reviewed',
+    body: 'Our team checks each submission before it goes live, so job seekers see genuine vacancies only.',
+    tint: 'bg-brand-yellow/25',
+    accent: 'text-brand-dark',
+    photo: review3.src,
+    audience: 'For Job Seekers',
+  },
+  {
+    title: 'Organised by category & city',
+    body: 'NGO, government, teaching, online and more — filtered by Nairobi, Mombasa, Kisumu and beyond.',
+    tint: 'bg-brand-orange/10',
+    accent: 'text-brand-orange',
+    photo: review4.src,
+    audience: 'For Employers',
+  },
+];
+
+const title = 'JobVacancy.co.ke — Find the Latest Jobs in Kenya';
+const description =
+  'Find the latest jobs in Kenya: NGO, government, teaching, TSC and online jobs. New vacancies in Nairobi, Mombasa, Kisumu, Eldoret and Nakuru added daily.';
+---
+
+<Layout title={title} description={description} path="/">
+  <!-- Hero -->
+  <section class="relative overflow-hidden bg-cream">
+    <div class="relative mx-auto grid max-w-7xl grid-cols-1 items-center gap-8 px-4 py-14 sm:px-6 md:grid-cols-[1fr_2fr_1fr] md:py-20">
+      <!-- Left diamonds -->
+      <div class="relative hidden h-[400px] md:block">
+        <div class="absolute left-2 top-2 h-20 w-20 rotate-45 bg-brand-orange"></div>
+        <div class="absolute left-16 top-10 h-36 w-36 overflow-hidden rounded-2xl rotate-45 shadow-lg">
+          <img src={tutor1.src} alt="Job seeker in Kenya" loading="lazy" class="h-full w-full -rotate-45 scale-150 object-cover" />
+        </div>
+        <div class="absolute -left-4 top-48 h-14 w-14 rotate-45 bg-brand-green"></div>
+        <div class="absolute left-10 top-60 h-28 w-28 overflow-hidden rounded-2xl rotate-45 shadow-lg ring-1 ring-black/5">
+          <img src={tutor3.src} alt="Professional at work" loading="lazy" class="h-full w-full -rotate-45 scale-150 object-cover" />
+        </div>
+        <div class="absolute left-40 top-[19rem] h-10 w-10 rotate-45 bg-brand-yellow"></div>
+      </div>
+
+      <!-- Center -->
+      <div class="text-center">
+        <span class="badge bg-brand-green/15 text-brand-green-dark">Kenya's #1 growing job board</span>
+        <h1 class="mt-5 text-4xl font-black leading-tight text-brand-dark sm:text-5xl">
+          Find the Latest <span class="highlight-mark">Jobs in Kenya</span>
+        </h1>
+        <p class="mx-auto mt-5 max-w-xl text-base text-brand-dark/60 sm:text-lg">
+          NGO, government, teaching &amp; TSC, and online jobs — updated daily in Nairobi, Mombasa, Kisumu, Eldoret and Nakuru.
+        </p>
+
+        <form action="/jobs/" method="get" class="mx-auto mt-8 flex max-w-xl overflow-hidden rounded-md border border-border bg-white shadow-sm">
+          <input
+            type="text"
+            name="search"
+            placeholder="Job title, company or keyword"
+            class="w-full px-4 py-3.5 text-sm text-brand-dark outline-none placeholder:text-slate-400 sm:px-5 sm:text-base"
+          />
+          <button type="submit" class="flex shrink-0 items-center gap-2 bg-brand-orange px-5 font-semibold text-white hover:opacity-90 sm:px-6">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"></circle><path d="m20 20-3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>
+            <span class="hidden sm:inline">Search</span>
+          </button>
+        </form>
+
+        <div class="mx-auto mt-4 flex max-w-xl flex-wrap items-center justify-center gap-2 text-xs">
+          <span class="flex items-center gap-1 font-semibold text-brand-green-dark">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M3 17l6-6 4 4 8-8M21 7v6h-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            Trending:
+          </span>
+          {trending.map((t) => (
+            <a href={t.href} class="rounded-full border border-border bg-white px-3 py-1 text-brand-dark hover:border-brand-orange">{t.name}</a>
+          ))}
+        </div>
+
+        <div class="mt-10 grid grid-cols-1 gap-4 text-sm text-brand-dark sm:grid-cols-3">
+          <div>
+            <div class="text-brand-orange">&#9670; &#9670;</div>
+            <b>100% Free</b><br />to browse &amp; apply
+          </div>
+          <div>
+            <div class="text-brand-orange">&#9670; &#9670;</div>
+            <b>16 Categories</b><br />NGO to Government
+          </div>
+          <div>
+            <div class="text-brand-orange">&#9670; &#9670;</div>
+            <b>Kenya-wide</b><br />+ remote &amp; international
+          </div>
+        </div>
+      </div>
+
+      <!-- Right diamonds -->
+      <div class="relative hidden h-[400px] md:block">
+        <div class="absolute right-14 top-0 h-36 w-36 overflow-hidden rounded-2xl rotate-45 shadow-lg">
+          <img src={tutor2.src} alt="Employer hiring in Kenya" loading="lazy" class="h-full w-full -rotate-45 scale-150 object-cover" />
+        </div>
+        <div class="absolute right-0 top-16 h-14 w-14 rotate-45 bg-brand-yellow"></div>
+        <div class="absolute right-40 top-32 h-16 w-16 rotate-45 bg-brand-orange"></div>
+        <div class="absolute right-6 top-56 h-28 w-28 overflow-hidden rounded-2xl rotate-45 shadow-lg ring-1 ring-black/5">
+          <img src={tutor4.src} alt="Job seeker in Kenya" loading="lazy" class="h-full w-full -rotate-45 scale-150 object-cover" />
+        </div>
+        <div class="absolute right-40 top-[19rem] h-14 w-14 rotate-45 bg-brand-green"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Trust bar -->
+  <section class="border-b border-border bg-white py-10">
+    <div class="mx-auto max-w-5xl px-4 text-center sm:px-6">
+      <p class="text-sm text-slate-500">Hiring across every sector in Kenya</p>
+      <div class="mt-4 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-base font-semibold italic text-brand-dark/70 sm:text-lg">
+        {sectors.map((s) => <span>{s}</span>)}
+      </div>
+    </div>
+  </section>
+
+  <!-- Categories -->
+  <section class="bg-white py-16">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6">
+      <div class="flex items-end justify-between gap-4">
+        <div>
+          <h2 class="text-2xl font-bold text-brand-dark sm:text-3xl">Browse Jobs by Category</h2>
+          <p class="mt-1 text-slate-500">From NGO and government jobs to teaching, TSC and online work.</p>
+        </div>
+        <a href="/jobs/" class="hidden shrink-0 text-sm font-semibold text-brand-orange hover:underline sm:block">View all jobs &rarr;</a>
+      </div>
+      <div class="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {NAV_CATEGORIES.map((c) => <CategoryCard slug={c.slug} name={c.name} />)}
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured jobs -->
+  <section class="bg-cream py-16">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6">
+      <div class="flex items-end justify-between gap-4">
+        <div>
+          <h2 class="text-2xl font-bold text-brand-dark sm:text-3xl">Featured Jobs</h2>
+          <p class="mt-1 text-slate-500">A handful of standout roles from employers hiring right now.</p>
+        </div>
+        <a href="/jobs/" class="hidden shrink-0 text-sm font-semibold text-brand-orange hover:underline sm:block">View all jobs &rarr;</a>
+      </div>
+      {featuredJobs.length > 0 ? (
+        <div class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {featuredJobs.map((job, i) => (
+            <FeaturedJobCard job={job} accent={FEATURED_ACCENTS[i % FEATURED_ACCENTS.length]} />
+          ))}
+        </div>
+      ) : (
+        <div class="mt-8 rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500">
+          Featured jobs will appear here as soon as the first listings are approved.
+        </div>
+      )}
+    </div>
+  </section>
+
+  <!-- Steps -->
+  <section class="bg-white py-16">
+    <div class="mx-auto max-w-6xl px-4 text-center sm:px-6">
+      <h2 class="text-3xl font-bold text-brand-dark">Finding your next job is easy</h2>
+      <div class="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
+        {[
+          { step: 'Step 1', title: 'SEARCH BY CATEGORY OR CITY', icon: 'M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm10 2-4.35-4.35' },
+          { step: 'Step 2', title: 'APPLY DIRECTLY — 100% FREE', icon: 'M5 12h14M13 6l6 6-6 6' },
+          { step: 'Step 3', title: 'GET HIRED', icon: 'm5 13 4 4L19 7' },
+        ].map((s) => (
+          <div class="card p-6 text-left">
+            <p class="text-sm font-semibold text-brand-green-dark">{s.step}</p>
+            <h3 class="mt-2 text-lg font-bold text-brand-dark">{s.title}</h3>
+            <div class="mt-6 flex h-32 items-center justify-center rounded bg-white">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d={s.icon} stroke="var(--color-brand-orange)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            </div>
+          </div>
+        ))}
+      </div>
+      <p class="mt-12 text-xl font-semibold text-brand-dark">100% free, always.</p>
+      <p class="mt-2 text-sm text-slate-500">No fees to browse, apply, or post a job. Every listing is reviewed before it goes live.</p>
+      <a href="/jobs/" class="btn-primary mt-6 inline-flex">Browse Jobs Now</a>
+    </div>
+  </section>
+
+  <!-- Latest jobs -->
+  <section class="bg-cream py-16">
+    <div class="mx-auto max-w-5xl px-4 sm:px-6">
+      <div class="flex items-end justify-between gap-4">
+        <div>
+          <h2 class="text-2xl font-bold text-brand-dark sm:text-3xl">Latest Job Vacancies</h2>
+          <p class="mt-1 text-slate-500">Freshly posted roles from employers across Kenya.</p>
+        </div>
+        <a href="/jobs/" class="hidden shrink-0 text-sm font-semibold text-brand-orange hover:underline sm:block">Browse all &rarr;</a>
+      </div>
+      {latestJobs.length > 0 ? (
+        <div class="mt-8 grid grid-cols-1 gap-4">
+          {latestJobs.map((job) => <JobCard job={job} />)}
+        </div>
+      ) : (
+        <div class="mt-8 rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500">
+          New jobs are posted daily — check back soon, or <a href="/post-a-job/" class="font-semibold text-brand-orange">post the first one</a>.
+        </div>
+      )}
+      <div class="mt-8 text-center sm:hidden">
+        <a href="/jobs/" class="btn-secondary">Browse all jobs</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Value props (job seekers + employers) -->
+  <section class="bg-white py-16">
+    <div class="mx-auto max-w-6xl px-4 sm:px-6">
+      <div class="text-center">
+        <h2 class="text-3xl font-bold text-brand-dark">Built for job seekers and employers</h2>
+        <p class="mt-2 text-sm text-slate-500">Straightforward, free, and made for the Kenyan job market.</p>
+      </div>
+      <div class="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2">
+        {valueProps.map((v) => (
+          <div class={`flex gap-4 rounded-lg p-6 ${v.tint}`}>
+            <img src={v.photo} alt="" loading="lazy" width="56" height="56" class="h-14 w-14 shrink-0 rounded-full object-cover ring-2 ring-white" />
+            <div>
+              <p class={`text-xs font-bold uppercase tracking-wide ${v.accent}`}>{v.audience}</p>
+              <h3 class="mt-1 text-base font-bold text-brand-dark">{v.title}</h3>
+              <p class="mt-1 text-sm text-brand-dark/70">{v.body}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats banner -->
+  <section class="relative overflow-hidden">
+    <img src={onlineLessons.src} alt="Working professionals in Kenya" loading="lazy" width="1600" height="700" class="h-[420px] w-full object-cover" />
+    <div class="absolute inset-0 bg-brand-dark/70"></div>
+    <div class="absolute inset-0 mx-auto flex max-w-6xl flex-col justify-center gap-6 px-4 sm:px-6">
+      <h2 class="text-3xl font-bold text-white md:text-4xl">
+        Wherever you are in Kenya,<br /><span class="highlight-mark">the right job is here.</span>
+      </h2>
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {[
+          { num: '16', label: 'Job categories' },
+          { num: '10+', label: 'Kenyan cities & remote' },
+          { num: '100%', label: 'Free to use' },
+        ].map((s) => (
+          <div class="rounded-lg bg-white px-5 py-4 text-brand-dark">
+            <div class="text-2xl font-extrabold text-brand-orange">{s.num}</div>
+            <div class="text-sm text-slate-500">{s.label}</div>
+          </div>
+        ))}
+      </div>
+      <p class="max-w-xl text-sm text-white/70">New vacancies are added every day — from NGO and government roles to fully remote, international positions.</p>
+    </div>
+  </section>
+
+  <!-- Employer CTA -->
+  <section class="relative overflow-hidden bg-brand-orange py-12">
+    <div class="absolute -left-10 top-0 h-32 w-32 rotate-45 bg-brand-green"></div>
+    <div class="absolute -right-10 top-0 h-32 w-32 rotate-45 bg-brand-yellow"></div>
+    <div class="relative mx-auto max-w-3xl px-4 text-center sm:px-6">
+      <h2 class="text-2xl font-bold text-white">Hiring in Kenya? Post your job for free.</h2>
+      <p class="mx-auto mt-2 max-w-xl text-sm text-white/90">
+        Reach thousands of job seekers across Kenya — from Nairobi to Mombasa, Kisumu and beyond. Every listing is reviewed before it goes live.
+      </p>
+      <a href="/post-a-job/" class="mt-5 inline-flex items-center gap-2 rounded-md bg-white px-6 py-2.5 font-semibold text-brand-dark hover:bg-white/90">
+        Post a Job Now
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      </a>
+    </div>
+  </section>
+
+  <!-- Locations -->
+  <section class="bg-white py-16">
+    <div class="mx-auto max-w-5xl px-4 text-center sm:px-6">
+      <h2 class="text-2xl font-bold text-brand-dark sm:text-3xl">Popular Locations</h2>
+      <p class="mt-1 text-slate-500">Find jobs near you, wherever you are in Kenya.</p>
+      <div class="mt-8 flex flex-wrap justify-center gap-2.5">
+        {NAV_LOCATIONS.map((l) => (
+          <a href={`/location/${l.slug}/`} class="rounded-full border border-border bg-white px-4 py-2 text-sm font-medium text-brand-dark hover:border-brand-orange hover:text-brand-orange">
+            {l.name}
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+</Layout>

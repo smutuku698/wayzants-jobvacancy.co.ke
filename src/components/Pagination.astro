@@ -1,0 +1,37 @@
+---
+interface Props {
+  page: number;
+  totalPages: number;
+  basePath: string;
+  searchParams?: URLSearchParams;
+}
+const { page, totalPages, basePath, searchParams } = Astro.props;
+
+function urlFor(p: number) {
+  const params = new URLSearchParams(searchParams);
+  if (p <= 1) params.delete('page');
+  else params.set('page', String(p));
+  const qs = params.toString();
+  return qs ? `${basePath}?${qs}` : basePath;
+}
+---
+
+{totalPages > 1 && (
+  <nav aria-label="Pagination" class="mt-8 flex items-center justify-center gap-2">
+    <a
+      href={urlFor(Math.max(1, page - 1))}
+      aria-disabled={page <= 1}
+      class={`btn-secondary !px-4 !py-2 text-sm ${page <= 1 ? 'pointer-events-none opacity-40' : ''}`}
+    >
+      Previous
+    </a>
+    <span class="px-3 text-sm text-slate-600">Page {page} of {totalPages}</span>
+    <a
+      href={urlFor(Math.min(totalPages, page + 1))}
+      aria-disabled={page >= totalPages}
+      class={`btn-secondary !px-4 !py-2 text-sm ${page >= totalPages ? 'pointer-events-none opacity-40' : ''}`}
+    >
+      Next
+    </a>
+  </nav>
+)}

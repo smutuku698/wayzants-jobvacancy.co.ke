@@ -1,0 +1,25 @@
+---
+export const prerender = true;
+import Layout from '../../layouts/Layout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+
+const title = 'Contact Us | JobVacancy.co.ke';
+const description = 'Get in touch with the JobVacancy.co.ke team.';
+---
+
+<Layout title={title} description={description} path="/contact/">
+  <Breadcrumbs items={[{ name: 'Home', href: '/' }, { name: 'Contact' }]} />
+  <div class="mx-auto max-w-2xl px-4 py-10 sm:px-6">
+    <h1 class="text-3xl font-extrabold text-brand-dark">Contact Us</h1>
+    <p class="mt-4 text-slate-600">
+      Questions about a listing, partnership ideas, or something not working right? We'd love to hear from you.
+    </p>
+    <div class="card mt-6 p-6">
+      <p class="text-sm font-semibold text-slate-500">Email</p>
+      <a href="mailto:hello@jobvacancy.co.ke" class="text-lg font-bold text-brand-orange">hello@jobvacancy.co.ke</a>
+      <p class="mt-4 text-sm text-slate-500">
+        For job listing questions, please include the job title and company name so we can find it quickly.
+      </p>
+    </div>
+  </div>
+</Layout>

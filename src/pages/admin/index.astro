@@ -1,0 +1,47 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getPendingJobs } from '../../lib/queries';
+import { formatDate, timeAgo } from '../../lib/format';
+import { jobTypeLabel } from '../../lib/seo';
+
+export const prerender = false;
+
+const pendingJobs = await getPendingJobs().catch(() => []);
+---
+
+<Layout title="Admin — Pending Jobs | JobVacancy.co.ke" description="Admin moderation queue." path="/admin/" noindex>
+  <div class="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+    <h1 class="text-2xl font-extrabold text-brand-dark">Pending Jobs ({pendingJobs.length})</h1>
+    <p class="mt-1 text-slate-500">Review and approve or reject new submissions.</p>
+
+    {pendingJobs.length === 0 ? (
+      <div class="card mt-6 p-10 text-center text-slate-500">No jobs waiting for review. 🎉</div>
+    ) : (
+      <div class="mt-6 space-y-4">
+        {pendingJobs.map((job) => (
+          <div class="card p-5">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 class="text-lg font-bold text-brand-dark">{job.title}</h2>
+                <p class="text-sm text-slate-600">{job.company_name} &middot; {job.locations?.name} &middot; {jobTypeLabel(job.job_type)}</p>
+                <p class="mt-1 text-xs text-slate-400">
+                  Category: {job.job_categories?.name} &middot; Submitted {timeAgo(job.created_at)} &middot; Contact: {job.contact_email}
+                </p>
+              </div>
+              <div class="flex shrink-0 gap-2">
+                <form method="post" action={`/api/admin/jobs/${job.id}/approve`}>
+                  <button type="submit" class="btn-primary !py-2 !px-4 text-sm">Approve</button>
+                </form>
+                <form method="post" action={`/api/admin/jobs/${job.id}/reject`}>
+                  <button type="submit" class="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-100">Reject</button>
+                </form>
+              </div>
+            </div>
+            <p class="mt-3 line-clamp-3 whitespace-pre-line text-sm text-slate-600">{job.description}</p>
+            {job.deadline && <p class="mt-2 text-xs text-slate-400">Deadline: {formatDate(job.deadline)}</p>}
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+</Layout>

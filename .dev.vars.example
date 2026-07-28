@@ -1,0 +1,5 @@
+# Copy this file to `.dev.vars` for local development (never commit `.dev.vars`).
+# In production these are set with `wrangler secret put <NAME>` — see SETUP.md.
+
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-goes-here
+ADMIN_PASSWORD=choose-a-strong-admin-password

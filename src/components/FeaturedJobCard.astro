@@ -1,0 +1,73 @@
+---
+import type { JobWithRelations } from '../lib/types';
+import { formatSalary, locationLabel, timeAgo } from '../lib/format';
+import { jobTypeLabel } from '../lib/seo';
+
+interface Props {
+  job: JobWithRelations;
+  accent?: 'pink' | 'purple' | 'teal' | 'orange' | 'green' | 'amber';
+}
+const { job, accent = 'orange' } = Astro.props;
+const salary = formatSalary(job);
+
+const ACCENTS: Record<string, { edge: string; tint: string; text: string }> = {
+  pink: { edge: 'bg-pink-500', tint: 'bg-pink-50', text: 'text-pink-600' },
+  purple: { edge: 'bg-purple-500', tint: 'bg-purple-50', text: 'text-purple-600' },
+  teal: { edge: 'bg-teal-500', tint: 'bg-teal-50', text: 'text-teal-600' },
+  orange: { edge: 'bg-brand-orange', tint: 'bg-brand-orange/10', text: 'text-brand-orange' },
+  green: { edge: 'bg-brand-green', tint: 'bg-brand-green/15', text: 'text-brand-green-dark' },
+  amber: { edge: 'bg-brand-yellow', tint: 'bg-brand-yellow/25', text: 'text-brand-dark' },
+};
+const c = ACCENTS[accent];
+
+---
+
+<a
+  href={`/jobs/${job.slug}/`}
+  class="group relative flex flex-col overflow-hidden rounded-xl border border-border bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+>
+  <span class={`h-1.5 w-full ${c.edge}`}></span>
+  <div class="flex flex-1 flex-col gap-3.5 p-5">
+    <div class="flex items-start justify-between gap-2">
+      <div class={`flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg ${c.tint} ring-1 ring-black/5`}>
+        {job.company_logo_url ? (
+          <img src={job.company_logo_url} alt={`${job.company_name} logo`} width="44" height="44" loading="lazy" class="h-full w-full object-cover" />
+        ) : (
+          <span class={`text-base font-bold ${c.text}`}>{job.company_name.charAt(0)}</span>
+        )}
+      </div>
+      <span class={`badge ${c.tint} ${c.text}`}>Featured</span>
+    </div>
+
+    <div>
+      <h3 class="text-base font-bold leading-snug text-brand-dark group-hover:text-brand-orange">{job.title}</h3>
+      <p class="mt-0.5 text-sm font-medium text-slate-500">{job.company_name}</p>
+    </div>
+
+    <div class="flex items-center gap-1.5 text-sm text-brand-dark">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class={`shrink-0 ${job.is_remote ? 'text-brand-green-dark' : 'text-slate-400'}`}>
+        <path d="M12 21s-7-6.1-7-11a7 7 0 1 1 14 0c0 4.9-7 11-7 11Z" stroke="currentColor" stroke-width="1.6"></path>
+        <circle cx="12" cy="10" r="2.4" stroke="currentColor" stroke-width="1.6"></circle>
+      </svg>
+      <span class="truncate font-medium">{locationLabel(job)}</span>
+    </div>
+
+    {salary && (
+      <p class="flex items-center gap-1.5 text-sm font-semibold text-brand-green-dark">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 3v18M17 7.5c0-1.9-2.2-3.5-5-3.5S7 5.6 7 7.5 9.2 11 12 11s5 1.6 5 3.5-2.2 3.5-5 3.5-5-1.6-5-3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path></svg>
+        {salary}
+      </p>
+    )}
+
+    <div class="mt-auto flex flex-wrap items-center gap-2 border-t border-border pt-3 text-xs text-slate-500">
+      <span class="badge bg-brand-dark/5 text-brand-dark">{jobTypeLabel(job.job_type)}</span>
+      {job.is_international && <span class="badge bg-brand-orange/10 text-brand-orange">International</span>}
+      <span class="ml-auto shrink-0">{timeAgo(job.created_at)}</span>
+    </div>
+
+    <div class="flex items-center gap-1 text-[11px] font-medium text-slate-400">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="var(--color-brand-green-dark)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      Reviewed &amp; verified listing
+    </div>
+  </div>
+</a>

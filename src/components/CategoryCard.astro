@@ -1,0 +1,42 @@
+---
+interface Props {
+  slug: string;
+  name: string;
+  count?: number;
+}
+const { slug, name, count } = Astro.props;
+
+const ICONS: Record<string, string> = {
+  'ngo-jobs': 'M12 21s-7-4.6-9.5-9.1C.7 8.2 2 4.5 5.6 4a4.9 4.9 0 0 1 6.4 2 4.9 4.9 0 0 1 6.4-2c3.6.5 4.9 4.2 3.1 7.9C19 16.4 12 21 12 21Z',
+  'teaching-jobs': 'M4 6.5 12 3l8 3.5-8 3.5-8-3.5Zm0 0v6c0 2 3.6 3.5 8 3.5s8-1.5 8-3.5v-6M8 12v5.5M20 10v5',
+  'tsc-jobs': 'M12 3 2 8l10 5 8-4v6M6 10.5V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-5.5',
+  'government-jobs': 'M4 21h16M5 21V10l7-6 7 6v11M9 21v-6h6v6M4 10h16',
+  'internships-graduate-trainee': 'M12 3 2 8l10 5 10-5-10-5ZM6 12.5V17c0 1.7 2.7 3 6 3s6-1.3 6-3v-4.5',
+  'it-software-jobs': 'M4 5h16v11H4V5Zm5 15h6M9 16v4M15 16v4M8 9l2 2-2 2m4 0h3',
+  'sales-marketing-jobs': 'm3 11 8-7 4 3 6-5v9l-6 5-4-3-8 7v-9Z',
+  'accounting-finance-jobs': 'M3 10h18M6 10V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4M4 10v9a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-9M9 14h6',
+  'admin-secretarial-jobs': 'M8 3h8l1 4H7l1-4Zm-2 4h12l1 14H5L6 7Zm3 5h6',
+  'healthcare-medical-jobs': 'M12 21s-7-4.4-9-9c-1.4-3.3.5-6.5 3.7-7A4.9 4.9 0 0 1 12 7a4.9 4.9 0 0 1 5.3-2C20.5 5.5 22.4 8.7 21 12c-2 4.6-9 9-9 9ZM12 8v6M9 11h6',
+  'engineering-construction-jobs': 'm14.7 6.3 3 3-8.4 8.4-4 1 1-4 8.4-8.4Zm3-3 3 3-2 2-3-3 2-2ZM4 21h4',
+  'driving-logistics-jobs': 'M3 13h13l2 4h3v3H3v-7Zm0 0 2-6h9l2 6M7 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm11 0a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z',
+  'security-jobs': 'M12 3 4 6v6c0 5 3.4 8.7 8 9 4.6-.3 8-4 8-9V6l-8-3Z',
+  'hospitality-tourism-jobs': 'M3 21h18M5 21V8l7-4 7 4v13M9 21v-5h6v5M9 12h.01M15 12h.01M9 8h.01M15 8h.01',
+  'customer-service-jobs': 'M4 12a8 8 0 1 1 16 0v4a2 2 0 0 1-2 2h-1v-6h3M4 16v-4h3v6H5a2 2 0 0 1-2-2v0Zm4 6h8',
+  'online-remote-jobs': 'M4 5h16v10H4V5Zm4 14h8m-4-4v4M2 19h20',
+};
+
+const path = ICONS[slug] ?? 'M6 7h12v11a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7Zm-2 0h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2';
+---
+
+<a
+  href={`/category/${slug}/`}
+  class="card group flex items-center gap-3 p-4 transition hover:-translate-y-0.5 hover:border-brand-orange hover:shadow-md"
+>
+  <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-brand-orange/10 text-brand-orange group-hover:bg-brand-orange group-hover:text-white">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d={path} stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+  </span>
+  <span class="min-w-0">
+    <span class="block truncate text-sm font-bold text-brand-dark group-hover:text-brand-orange">{name}</span>
+    {count !== undefined && <span class="text-xs text-slate-500">{count} open roles</span>}
+  </span>
+</a>

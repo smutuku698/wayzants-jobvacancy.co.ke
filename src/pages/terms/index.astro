@@ -1,0 +1,37 @@
+---
+export const prerender = true;
+import Layout from '../../layouts/Layout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+
+const title = 'Terms of Use | JobVacancy.co.ke';
+const description = 'Terms of use for JobVacancy.co.ke.';
+---
+
+<Layout title={title} description={description} path="/terms/" noindex>
+  <Breadcrumbs items={[{ name: 'Home', href: '/' }, { name: 'Terms of Use' }]} />
+  <div class="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+    <h1 class="text-3xl font-extrabold text-brand-dark">Terms of Use</h1>
+    <p class="mt-2 text-sm text-slate-400">Last updated: {new Date().toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+    <div class="prose prose-slate mt-6 max-w-none space-y-4 text-slate-700">
+      <h2 class="text-xl font-bold text-brand-dark">Job listings</h2>
+      <p>
+        Job posts are submitted by employers and reviewed before publication, but JobVacancy.co.ke does not
+        guarantee the accuracy of any listing. Job seekers should exercise normal caution — never pay money to
+        apply for a job, and verify employer details independently where possible.
+      </p>
+      <h2 class="text-xl font-bold text-brand-dark">Posting rules</h2>
+      <p>
+        Listings must be for genuine, currently open positions. We reserve the right to reject or remove any
+        listing that is misleading, discriminatory, requests payment from applicants, or otherwise violates these
+        terms.
+      </p>
+      <h2 class="text-xl font-bold text-brand-dark">Liability</h2>
+      <p>
+        JobVacancy.co.ke is a listings platform only and is not a party to any employment relationship formed
+        between a job seeker and an employer. Use of this site is at your own risk.
+      </p>
+      <h2 class="text-xl font-bold text-brand-dark">Contact</h2>
+      <p>Questions about these terms? Email <a href="mailto:hello@jobvacancy.co.ke" class="font-semibold text-brand-orange">hello@jobvacancy.co.ke</a>.</p>
+    </div>
+  </div>
+</Layout>
