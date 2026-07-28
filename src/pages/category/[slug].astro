@@ -3,9 +3,11 @@ import Layout from '../../layouts/Layout.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import JobCard from '../../components/JobCard.astro';
 import Pagination from '../../components/Pagination.astro';
-import { getCategoryBySlug, getApprovedJobs } from '../../lib/queries';
+import { getCategoryBySlug, getApprovedJobs, getLatestLocalJobs, getPopulatedCategories, getJobsByCategorySlug } from '../../lib/queries';
 import { getCategoryContent } from '../../lib/content';
 import { breadcrumbJsonLd, SITE_URL } from '../../lib/seo';
+import { RELATED_CATEGORIES } from '../../lib/taxonomy';
+import type { JobCategory, JobWithRelations } from '../../lib/types';
 
 const { slug } = Astro.params;
 const category = slug ? await getCategoryBySlug(slug).catch(() => null) : null;
@@ -24,6 +26,31 @@ const result = await getApprovedJobs({ categorySlug: category.slug, page }).catc
 }));
 const totalPages = Math.max(1, Math.ceil(result.total / result.pageSize));
 const copy = getCategoryContent(category.slug, category.name);
+
+const isEmpty = result.jobs.length === 0 && page === 1;
+
+// Empty category → first try genuinely related categories (e.g. tsc-jobs has
+// no dedicated scraper source, so surface teaching-jobs/teaching-jobs-abroad
+// instead of an unrelated top category). Only fall back to "most populated
+// category site-wide" if the related ones are ALSO empty — the safety net
+// for "vice versa" (e.g. if ngo-jobs itself ever went empty).
+let relatedGroups: { category: JobCategory; jobs: JobWithRelations[] }[] = [];
+let suggestedCategories: JobCategory[] = [];
+if (isEmpty) {
+  const relatedSlugs = RELATED_CATEGORIES[category.slug] ?? [];
+  const candidates = await Promise.all(
+    relatedSlugs.map(async (relSlug) => {
+      const [relCategory, relJobs] = await Promise.all([getCategoryBySlug(relSlug), getJobsByCategorySlug(relSlug, 6)]);
+      return relCategory && relJobs.length > 0 ? { category: relCategory, jobs: relJobs } : null;
+    })
+  );
+  relatedGroups = candidates.filter((c): c is { category: JobCategory; jobs: JobWithRelations[] } => c !== null);
+
+  if (relatedGroups.length === 0) {
+    suggestedCategories = await getPopulatedCategories(category.slug, 3).catch(() => []);
+  }
+}
+const fallbackJobs = isEmpty ? await getLatestLocalJobs(6).catch(() => []) : [];
 
 const jsonLd = breadcrumbJsonLd([
   { name: 'Home', url: SITE_URL },
@@ -45,9 +72,47 @@ const jsonLd = breadcrumbJsonLd([
         {result.jobs.map((job) => <JobCard job={job} />)}
       </div>
     ) : (
-      <div class="card mt-6 p-10 text-center text-slate-500">
-        <p class="font-semibold text-brand-dark">No {category.name.toLowerCase()} right now.</p>
-        <p class="mt-1 text-sm">New jobs are posted daily — check back soon, or browse <a href="/jobs/" class="font-semibold text-brand-orange">all open jobs</a>.</p>
+      <div class="mt-6">
+        <div class="card p-10 text-center text-slate-500">
+          <p class="font-semibold text-brand-dark">0 {category.name.toLowerCase()} for now — come back later.</p>
+          {relatedGroups.length > 0 ? (
+            <p class="mt-1 text-sm">
+              See also other {relatedGroups.map((g) => g.category.name.toLowerCase()).join(' and ')} below, or browse{' '}
+              <a href="/jobs/" class="font-semibold text-brand-orange">all open jobs</a>.
+            </p>
+          ) : (
+            <p class="mt-1 text-sm">New jobs are posted daily — check back soon, or browse <a href="/jobs/" class="font-semibold text-brand-orange">all open jobs</a>.</p>
+          )}
+        </div>
+
+        {suggestedCategories.length > 0 && (
+          <div class="mt-6 flex flex-wrap items-center justify-center gap-2 text-sm">
+            <span class="text-slate-500">Try instead:</span>
+            {suggestedCategories.map((c) => (
+              <a href={`/category/${c.slug}/`} class="rounded-full border border-border bg-white px-3 py-1.5 font-semibold text-brand-dark hover:border-brand-orange hover:text-brand-orange">
+                {c.name}
+              </a>
+            ))}
+          </div>
+        )}
+
+        {relatedGroups.map((group) => (
+          <div class="mt-10">
+            <h2 class="text-lg font-bold text-brand-dark">{group.category.name}</h2>
+            <div class="mt-4 grid grid-cols-1 gap-4">
+              {group.jobs.map((job) => <JobCard job={job} />)}
+            </div>
+          </div>
+        ))}
+
+        {fallbackJobs.length > 0 && (
+          <div class="mt-10">
+            <h2 class="text-lg font-bold text-brand-dark">Other jobs in Kenya right now</h2>
+            <div class="mt-4 grid grid-cols-1 gap-4">
+              {fallbackJobs.map((job) => <JobCard job={job} />)}
+            </div>
+          </div>
+        )}
       </div>
     )}
     <Pagination page={result.page} totalPages={totalPages} basePath={`/category/${category.slug}/`} searchParams={url.searchParams} />

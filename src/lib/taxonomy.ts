@@ -25,6 +25,7 @@ export const NAV_CATEGORIES: NavItem[] = [
   { slug: 'hospitality-tourism-jobs', name: 'Hospitality & Tourism Jobs' },
   { slug: 'customer-service-jobs', name: 'Customer Service Jobs' },
   { slug: 'online-remote-jobs', name: 'Online & Remote Jobs' },
+  { slug: 'teaching-jobs-abroad', name: 'Teaching Jobs Abroad' },
 ];
 
 export const NAV_LOCATIONS: NavItem[] = [
@@ -39,6 +40,24 @@ export const NAV_LOCATIONS: NavItem[] = [
   { slug: 'remote-online-kenya', name: 'Remote / Online (Kenya)' },
   { slug: 'international-remote', name: 'International (Remote)' },
 ];
+
+/**
+ * Semantically related categories — used both for a job detail page's
+ * "explore related categories" interlinking (site-wide, for SEO) and as the
+ * first thing tried on an empty category page (e.g. tsc-jobs has no
+ * dedicated scraper source, so it should surface teaching-jobs /
+ * teaching-jobs-abroad rather than an unrelated top category). Deliberately
+ * only defined for genuinely related pairs, not every category — an
+ * irrelevant "related" link is worse than none. Symmetric on purpose: if
+ * ngo-jobs or teaching-jobs ever went empty too, the reverse mapping kicks in.
+ */
+export const RELATED_CATEGORIES: Record<string, string[]> = {
+  'tsc-jobs': ['teaching-jobs', 'teaching-jobs-abroad'],
+  'teaching-jobs': ['tsc-jobs', 'teaching-jobs-abroad'],
+  'teaching-jobs-abroad': ['teaching-jobs', 'tsc-jobs'],
+  'government-jobs': ['ngo-jobs'],
+  'ngo-jobs': ['government-jobs'],
+};
 
 export const TOP_NAV_CATEGORIES: NavItem[] = [
   NAV_CATEGORIES[0], // NGO

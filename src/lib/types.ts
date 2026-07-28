@@ -20,6 +20,17 @@ export interface Location {
   sort_order: number;
 }
 
+export interface AiEnhancement {
+  skills: string[];
+  careerLevel: string;
+  kenyaSalaryEstimate: string;
+  metaDescription: string;
+  applicationTips: string[];
+  kenyaContext: string;
+  enhancementSource: 'ai' | 'template' | 'cache' | 'legacy';
+  enhancedAt: string;
+}
+
 export interface Job {
   id: string;
   title: string;
@@ -45,6 +56,9 @@ export interface Job {
   created_at: string;
   approved_at: string | null;
   expires_at: string | null;
+  source_url: string | null;
+  source: string | null;
+  ai_enhancement: AiEnhancement | null;
 }
 
 export interface JobWithRelations extends Job {

@@ -11,7 +11,11 @@
     "preview": "wrangler dev",
     "deploy": "astro build && wrangler deploy",
     "cf-typegen": "wrangler types",
-    "astro": "astro"
+    "astro": "astro",
+    "import-legacy": "tsx scripts/import-legacy-jobs.ts",
+    "scrape:remote": "tsx scripts/scrape-remote-jobs.ts",
+    "scrape:ngo": "tsx scripts/scrape-ngo-jobs.ts",
+    "scrape:local": "tsx scripts/scrape-local-jobs.ts"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.1.5",
@@ -22,6 +26,11 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
+    "@types/node": "^22.10.5",
+    "cheerio": "^1.0.0",
+    "dotenv": "^16.4.7",
+    "fast-xml-parser": "^4.5.1",
+    "tsx": "^4.19.2",
     "typescript": "^6.0.3",
     "wrangler": "^4.34.0"
   }
