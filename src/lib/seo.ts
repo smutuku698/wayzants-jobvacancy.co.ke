@@ -20,6 +20,42 @@ export function organizationJsonLd() {
     url: SITE_URL,
     logo: `${SITE_URL}/icon-512.png`,
     description: 'Kenya’s job board for NGO, government, teaching, TSC and online jobs.',
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: 'Moi Avenue, Delta Plaza, Room 45',
+      addressLocality: 'Nairobi',
+      postalCode: '00100',
+      addressCountry: 'KE',
+    },
+    contactPoint: {
+      '@type': 'ContactPoint',
+      contactType: 'customer service',
+      telephone: '+254-736-407-642',
+      email: 'hello@jobvacancy.co.ke',
+      areaServed: 'KE',
+      availableLanguage: ['English', 'Swahili'],
+    },
+    sameAs: [
+      'https://www.facebook.com/profile.php?id=61579442721300',
+      'https://twitter.com/jobvacancyke',
+      'https://instagram.com/jobvacancy.co.ke',
+      'https://www.linkedin.com/company/jobvacancy-kenya',
+    ],
+  };
+}
+
+export function faqJsonLd(items: { question: string; answer: string }[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: items.map((item) => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.answer,
+      },
+    })),
   };
 }
 
