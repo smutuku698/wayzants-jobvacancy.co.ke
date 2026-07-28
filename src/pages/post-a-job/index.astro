@@ -12,7 +12,9 @@ const [categories, locations] = await Promise.all([
 const error = Astro.url.searchParams.get('error');
 const ERROR_MESSAGES: Record<string, string> = {
   missing_fields: 'Please fill in all required fields and try again.',
-  invalid_logo: 'Your logo must be a JPG, PNG or WEBP image under 2MB.',
+  invalid_logo: 'Your logo must be a genuine JPG, PNG or WEBP image under 2MB.',
+  invalid_fields:
+    'Please check your email address and application link/email, and make sure no field is unusually long, then try again.',
   server_error: 'Something went wrong on our end. Please try again in a moment.',
 };
 

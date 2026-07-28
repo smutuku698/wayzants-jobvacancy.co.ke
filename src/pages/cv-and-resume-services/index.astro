@@ -112,22 +112,24 @@ const description =
                 type="button"
                 class="cv-card-trigger group block cursor-zoom-in overflow-hidden"
                 data-image={t.image}
-                data-title={t.title}
+                data-title={`${t.title} (${t.id})`}
                 data-wa={orderLink}
               >
-                <div class="aspect-[3/4] overflow-hidden bg-cream">
+                <div class="relative aspect-[3/4] overflow-hidden bg-cream">
                   <img
                     src={t.image}
                     alt={t.title}
                     loading="lazy"
                     class="h-full w-full object-cover object-top transition-transform group-hover:scale-105"
                   />
+                  <span class="badge absolute right-2 top-2 bg-brand-dark/80 text-[10px] text-white">{t.id}</span>
                 </div>
               </button>
               <div class="flex flex-1 flex-col p-3">
                 <p class="text-sm font-semibold leading-tight text-brand-dark">{t.title}</p>
                 <div class="mt-1.5 flex flex-wrap gap-1">
                   <span class="badge bg-brand-dark/5 text-[10px] text-brand-dark">{t.industry}</span>
+                  <span class="badge bg-brand-dark/5 text-[10px] text-brand-dark">{t.id}</span>
                 </div>
                 <a href={orderLink} target="_blank" rel="noopener noreferrer" class="btn-secondary mt-3 !py-1.5 text-xs">
                   Order This CV

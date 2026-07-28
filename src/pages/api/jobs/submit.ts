@@ -8,9 +8,35 @@ export const prerender = false;
 const MAX_LOGO_BYTES = 2 * 1024 * 1024;
 const ALLOWED_LOGO_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const ALLOWED_CURRENCIES = new Set(['KES', 'USD', 'GBP', 'EUR']);
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const MAX_LENGTHS = {
+  title: 200,
+  company_name: 200,
+  description: 10000,
+  contact_name: 150,
+  application_value: 500,
+  contact_email: 254,
+};
 
 function redirectTo(path: string) {
   return new Response(null, { status: 303, headers: { Location: path } });
+}
+
+/** Confirms the uploaded bytes actually are the image type claimed — a spoofed
+ * Content-Type on the FormData part is trivial for a client to send. */
+function matchesImageSignature(bytes: Uint8Array, mimeType: string): boolean {
+  if (mimeType === 'image/jpeg') return bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+  if (mimeType === 'image/png') {
+    const png = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+    return png.every((b, i) => bytes[i] === b);
+  }
+  if (mimeType === 'image/webp') {
+    const isRiff = bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46;
+    const isWebp = bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50;
+    return isRiff && isWebp;
+  }
+  return false;
 }
 
 export const POST: APIRoute = async ({ request }) => {
@@ -49,6 +75,31 @@ export const POST: APIRoute = async ({ request }) => {
     return redirectTo('/post-a-job/?error=missing_fields');
   }
 
+  if (
+    title.length > MAX_LENGTHS.title ||
+    company_name.length > MAX_LENGTHS.company_name ||
+    description.length > MAX_LENGTHS.description ||
+    application_value.length > MAX_LENGTHS.application_value ||
+    contact_email.length > MAX_LENGTHS.contact_email ||
+    (contact_name?.length ?? 0) > MAX_LENGTHS.contact_name
+  ) {
+    return redirectTo('/post-a-job/?error=invalid_fields');
+  }
+
+  if (!EMAIL_RE.test(contact_email)) {
+    return redirectTo('/post-a-job/?error=invalid_fields');
+  }
+
+  if (application_method === 'email' && !EMAIL_RE.test(application_value)) {
+    return redirectTo('/post-a-job/?error=invalid_fields');
+  }
+  if (application_method === 'url' && !/^https:\/\//i.test(application_value)) {
+    return redirectTo('/post-a-job/?error=invalid_fields');
+  }
+  if (application_method !== 'email' && application_method !== 'url') {
+    return redirectTo('/post-a-job/?error=invalid_fields');
+  }
+
   const is_international = formData.get('is_international') === '1';
   const is_remote = is_international || formData.get('is_remote') === '1';
 
@@ -66,10 +117,17 @@ export const POST: APIRoute = async ({ request }) => {
       return redirectTo('/post-a-job/?error=invalid_logo');
     }
     try {
+      const bytes = new Uint8Array(await logo.arrayBuffer());
+      // The browser-reported MIME type is just a label the client attaches to
+      // the upload — trivially spoofable. Confirm the file's actual header
+      // bytes match before trusting it as that image type.
+      if (!matchesImageSignature(bytes, logo.type)) {
+        return redirectTo('/post-a-job/?error=invalid_logo');
+      }
       const env = getEnv();
       const ext = logo.type === 'image/png' ? 'png' : logo.type === 'image/webp' ? 'webp' : 'jpg';
       const key = `logos/${crypto.randomUUID()}.${ext}`;
-      await env.JOB_IMAGES.put(key, await logo.arrayBuffer(), {
+      await env.JOB_IMAGES.put(key, bytes, {
         httpMetadata: { contentType: logo.type },
       });
       company_logo_url = `${env.PUBLIC_R2_PUBLIC_URL}/${key}`;

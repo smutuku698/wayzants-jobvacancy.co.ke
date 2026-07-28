@@ -18,6 +18,15 @@ const { title, description, path = Astro.url.pathname, ogImage = '/og-image.png'
 const canonical = new URL(path, SITE_URL).toString();
 const ogImageUrl = new URL(ogImage, SITE_URL).toString();
 const jsonLdList = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
+
+// JSON.stringify does not escape "<", so a job title/description containing
+// a literal "</script>" (submitted through the public post-a-job form) would
+// close this script tag early and let the rest be parsed as HTML — a stored
+// XSS. Escaping "<" to its unicode form is inert inside JSON but can't form
+// a closing tag once serialized into the page.
+function safeJsonLd(data: unknown) {
+  return JSON.stringify(data).replace(/</g, '\\u003c');
+}
 ---
 
 <!doctype html>
@@ -47,9 +56,9 @@ const jsonLdList = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImageUrl} />
 
-    <script type="application/ld+json" is:inline set:html={JSON.stringify(organizationJsonLd())} />
-    <script type="application/ld+json" is:inline set:html={JSON.stringify(websiteJsonLd())} />
-    {jsonLdList.map((ld) => <script type="application/ld+json" is:inline set:html={JSON.stringify(ld)} />)}
+    <script type="application/ld+json" is:inline set:html={safeJsonLd(organizationJsonLd())} />
+    <script type="application/ld+json" is:inline set:html={safeJsonLd(websiteJsonLd())} />
+    {jsonLdList.map((ld) => <script type="application/ld+json" is:inline set:html={safeJsonLd(ld)} />)}
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
