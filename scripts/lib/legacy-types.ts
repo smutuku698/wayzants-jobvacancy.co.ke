@@ -37,6 +37,50 @@ export interface LegacyNgoJob extends LegacyRemoteJob {
   theme?: string[];
 }
 
+// Historical cruise-ship-jobs seed (C:\Users\Atom\Documents\jobs-in-kenya-scrapper\
+// cruise_ship_jobs_scraper\enhanced_cruise_jobs_*.json) — same rich-prose
+// enhancement shape the old site's local-jobs pipeline used, not the
+// skills/metaDescription shape of LegacyEnhancement above.
+export interface LegacyCruiseJob {
+  id: string;
+  title: string;
+  url: string;
+  apply_url?: string;
+  location?: string;
+  category?: string;
+  employer?: string;
+  description?: string;
+  source: string;
+  scraped_at?: string;
+  company_insights?: string;
+  career_growth?: string;
+  work_environment?: string;
+  benefits?: string;
+  application_tips?: string;
+  market_context?: string;
+}
+
+// Historical teaching-jobs-abroad seed (C:\Users\Atom\Documents\jobs-in-kenya-scrapper\
+// teaching_jobs_abroad_scraper\data\enhanced_teaching_jobs_latest.json).
+export interface LegacyTeachingAbroadJob {
+  id: string;
+  title: string;
+  url: string;
+  apply_url?: string;
+  location?: string;
+  region?: string;
+  employer?: string;
+  description?: string;
+  source: string;
+  posted_date?: string;
+  about_teaching_abroad?: string;
+  career_benefits?: string;
+  lifestyle_benefits?: string;
+  package_highlights?: string;
+  application_advice?: string;
+  regional_insight?: string;
+}
+
 export interface LegacyLocalJob {
   id: number;
   date: string;

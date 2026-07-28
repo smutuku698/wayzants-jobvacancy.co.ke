@@ -16,6 +16,8 @@ const ERROR_MESSAGES: Record<string, string> = {
   server_error: 'Something went wrong on our end. Please try again in a moment.',
 };
 
+const CURRENCIES = ['KES', 'USD', 'GBP', 'EUR'];
+
 const title = 'Post a Job in Kenya — Free Job Listing | JobVacancy.co.ke';
 const description =
   'Post a job in Kenya for free. Reach job seekers across Nairobi, Mombasa, Kisumu and beyond. Every listing is reviewed before it goes live.';
@@ -27,9 +29,11 @@ const description =
   <div class="mx-auto max-w-3xl px-4 py-8 sm:px-6">
     <h1 class="text-2xl font-extrabold text-brand-dark sm:text-3xl">Post a Job — 100% Free</h1>
     <p class="mt-2 text-slate-600">
-      Reach thousands of job seekers across Kenya. Every submission is reviewed by our team before it goes live,
-      usually within 24 hours.
+      Reach thousands of job seekers across Kenya. Every submission is checked by our team before it goes live,
+      usually within 24 hours — genuine roles get published, and listings that look like scams or charge
+      applicants a fee are rejected.
     </p>
+    <p class="mt-1 text-sm text-slate-500">Fields marked * are required. The examples in each field are just a guide — replace them with your own details.</p>
 
     {error && (
       <div class="mt-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -42,11 +46,13 @@ const description =
         <legend class="text-sm font-bold uppercase tracking-wide text-slate-500">Job Details</legend>
         <div>
           <label for="title" class="mb-1.5 block text-sm font-semibold text-brand-dark">Job Title *</label>
-          <input id="title" name="title" type="text" required placeholder="e.g. Programme Officer" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+          <input id="title" name="title" type="text" required maxlength="120" placeholder="e.g. Accountant, Sales Executive, Programme Officer – M&E" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+          <p class="mt-1 text-xs text-slate-400">Use the actual job title only — no "URGENT!!!", salary figures or contact details here.</p>
         </div>
         <div>
           <label for="company_name" class="mb-1.5 block text-sm font-semibold text-brand-dark">Company / Organisation Name *</label>
-          <input id="company_name" name="company_name" type="text" required class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+          <input id="company_name" name="company_name" type="text" required maxlength="150" placeholder="e.g. Kenya Red Cross Society" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+          <p class="mt-1 text-xs text-slate-400">The real, verifiable name of the hiring company — not a recruiter's personal name.</p>
         </div>
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
@@ -84,22 +90,45 @@ const description =
         </div>
         <div>
           <label for="description" class="mb-1.5 block text-sm font-semibold text-brand-dark">Job Description *</label>
-          <textarea id="description" name="description" required rows="8" placeholder="Responsibilities, requirements, qualifications, how to apply..." class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange"></textarea>
+          <textarea
+            id="description"
+            name="description"
+            required
+            minlength="100"
+            rows="10"
+            placeholder={`e.g.\n\nAbout the role:\nWe are looking for a Sales Executive to grow our client base in Nairobi.\n\nKey responsibilities:\n- Identify and approach new business leads\n- Meet monthly sales targets\n- Prepare weekly sales reports\n\nRequirements:\n- Diploma or degree in Sales/Marketing or related field\n- 2+ years' experience in a similar role\n- Excellent communication skills\n\nHow to apply:\nSend your CV and cover letter to the email/link below by [deadline].`}
+            class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange"></textarea>
+          <p class="mt-1 text-xs text-slate-400">
+            Minimum 100 characters. Detailed listings (responsibilities, requirements, qualifications) get more
+            applicants and are approved faster. Do not mention application fees, forex/crypto "training", or
+            requests for ID/M-Pesa details — those get rejected.
+          </p>
         </div>
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <div>
-            <label for="salary_min" class="mb-1.5 block text-sm font-semibold text-brand-dark">Min Salary (KES)</label>
-            <input id="salary_min" name="salary_min" type="number" min="0" placeholder="Optional" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+            <label for="salary_min" class="mb-1.5 block text-sm font-semibold text-brand-dark">Min Salary</label>
+            <input id="salary_min" name="salary_min" type="number" min="0" step="1" placeholder="e.g. 45000" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
           </div>
           <div>
-            <label for="salary_max" class="mb-1.5 block text-sm font-semibold text-brand-dark">Max Salary (KES)</label>
-            <input id="salary_max" name="salary_max" type="number" min="0" placeholder="Optional" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+            <label for="salary_max" class="mb-1.5 block text-sm font-semibold text-brand-dark">Max Salary</label>
+            <input id="salary_max" name="salary_max" type="number" min="0" step="1" placeholder="e.g. 80000" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+          </div>
+          <div>
+            <label for="salary_currency" class="mb-1.5 block text-sm font-semibold text-brand-dark">Currency</label>
+            <select id="salary_currency" name="salary_currency" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange">
+              {CURRENCIES.map((c) => <option value={c}>{c}</option>)}
+            </select>
           </div>
           <div>
             <label for="deadline" class="mb-1.5 block text-sm font-semibold text-brand-dark">Application Deadline</label>
             <input id="deadline" name="deadline" type="date" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
           </div>
         </div>
+        <p class="-mt-2 text-xs text-slate-400">
+          Salary is optional but listings with a salary range get significantly more applicants. Use whole numbers
+          only (e.g. 45000, not "45,000" or "45k"). Pick USD/GBP/EUR for roles paid in foreign currency (e.g.
+          international remote or teaching-abroad jobs).
+        </p>
         <div>
           <label for="logo" class="mb-1.5 block text-sm font-semibold text-brand-dark">Company Logo</label>
           <input id="logo" name="logo" type="file" accept="image/png,image/jpeg,image/webp" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none file:mr-3 file:rounded-md file:border-0 file:bg-cream file:px-3 file:py-1.5 file:text-sm focus:border-brand-orange" />
@@ -121,7 +150,8 @@ const description =
         </div>
         <div>
           <label for="application_value" class="mb-1.5 block text-sm font-semibold text-brand-dark">Application Email or URL *</label>
-          <input id="application_value" name="application_value" type="text" required placeholder="jobs@company.com or https://company.com/apply" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+          <input id="application_value" name="application_value" type="text" required placeholder="e.g. jobs@company.com or https://company.com/careers/apply" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+          <p class="mt-1 text-xs text-slate-400">A work email at your company's domain or a real application link — not a personal Gmail/WhatsApp number.</p>
         </div>
       </fieldset>
 
@@ -131,13 +161,24 @@ const description =
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label for="contact_name" class="mb-1.5 block text-sm font-semibold text-brand-dark">Your Name</label>
-            <input id="contact_name" name="contact_name" type="text" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+            <input id="contact_name" name="contact_name" type="text" placeholder="e.g. Jane Wanjiku" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
           </div>
           <div>
             <label for="contact_email" class="mb-1.5 block text-sm font-semibold text-brand-dark">Your Email *</label>
-            <input id="contact_email" name="contact_email" type="email" required class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+            <input id="contact_email" name="contact_email" type="email" required placeholder="e.g. hr@company.com" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
           </div>
         </div>
+      </fieldset>
+
+      <fieldset class="space-y-3 border-t border-slate-100 pt-6">
+        <legend class="text-sm font-bold uppercase tracking-wide text-slate-500">Before You Submit</legend>
+        <label class="flex items-start gap-2.5 text-sm text-brand-dark">
+          <input type="checkbox" name="confirm_genuine" value="1" required class="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-orange focus:ring-brand-orange" />
+          <span>
+            I confirm this is a genuine job opening and that applicants will never be asked to pay any fee, buy
+            starter kits, or share M-Pesa/ID details to apply or get hired. *
+          </span>
+        </label>
       </fieldset>
 
       <button type="submit" class="btn-primary w-full !py-3 text-base">Submit for Review</button>

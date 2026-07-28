@@ -27,6 +27,18 @@ export interface AiEnhancement {
   metaDescription: string;
   applicationTips: string[];
   kenyaContext: string;
+  /** 2-3 sentence overview of the role — a lead-in paragraph before the raw scraped description. */
+  jobSummary?: string;
+  /** Paragraph on the employer/organisation itself. */
+  companyInsights?: string;
+  /** Paragraph on career progression/advancement in this kind of role. */
+  careerGrowth?: string;
+  /** Paragraph on day-to-day work environment and culture. */
+  workEnvironment?: string;
+  /** Paragraph on benefits/compensation beyond base salary. */
+  benefits?: string;
+  /** Paragraph on market demand/industry context for this kind of role. */
+  marketContext?: string;
   enhancementSource: 'ai' | 'template' | 'cache' | 'legacy';
   enhancedAt: string;
 }

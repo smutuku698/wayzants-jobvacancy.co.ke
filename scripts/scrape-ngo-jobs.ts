@@ -106,7 +106,13 @@ async function main() {
 
     if (isNew) {
       row.approved_at = new Date().toISOString();
-      row.ai_enhancement = await liveEnhance(supabase, { title: job.title, company: job.company, description: job.description, categorySlug: NGO_CATEGORY_SLUG });
+      row.ai_enhancement = await liveEnhance(supabase, {
+        title: job.title,
+        company: job.company,
+        description: job.description,
+        categorySlug: NGO_CATEGORY_SLUG,
+        sourceCategory: job.category,
+      });
       row.slug = await uniqueSlug(supabase, job.title, job.company);
     } else {
       row.slug = existingSlugs.get(job.url);

@@ -1,12 +1,16 @@
-// One-time historical import: reads the three legacy JSON datasets from the
-// old Next.js jobvacancy.co.ke project and inserts them into Supabase as
-// approved jobs. Safe to re-run — every row upserts on `source_url` (real URL
-// for remote/NGO jobs, a synthesized content hash for local jobs, which have
-// none in the source data).
+// One-time historical import: reads legacy JSON datasets — three from the old
+// Next.js jobvacancy.co.ke project, plus a capped 50-job seed each for
+// cruise-ship-jobs and teaching-jobs-abroad from the separate Python scraper
+// repo (see SCRAPER_REPO_DIR) — and inserts them into Supabase as approved
+// jobs. Safe to re-run — every row upserts on `source_url` (real URL for
+// remote/NGO/cruise/teaching-abroad jobs, a synthesized content hash for
+// local jobs, which have none in the source data).
 //
 // Usage:
 //   tsx scripts/import-legacy-jobs.ts --dry-run --limit=20
 //   tsx scripts/import-legacy-jobs.ts --only=local --limit=50
+//   tsx scripts/import-legacy-jobs.ts --only=cruise
+//   tsx scripts/import-legacy-jobs.ts --only=teaching-abroad
 //   tsx scripts/import-legacy-jobs.ts                 (full run, all sources)
 
 import 'dotenv/config';
@@ -22,13 +26,23 @@ import {
   mapNgoJobLocation,
   mapJobType,
   REMOTE_CATEGORY_SLUG,
+  TEACHING_ABROAD_CATEGORY_SLUG,
+  CRUISE_CATEGORY_SLUG,
+  ABROAD_LOCATION_SLUG,
 } from './lib/category-mapping';
-import { remapLegacyEnhancement, deriveEnhancementFromLocalJob } from './lib/ai-enhance';
+import { remapLegacyEnhancement, deriveEnhancementFromLocalJob, deriveEnhancementFromCruiseJob, deriveEnhancementFromTeachingAbroadJob } from './lib/ai-enhance';
 import { decodeHtmlEntities, repairMojibake, cleanCompanyName, isLikelyNonJobListing } from './lib/text-utils';
 import type { AiEnhancement } from '../src/lib/types';
-import type { LegacyLocalJob, LegacyNgoJob, LegacyRemoteJob } from './lib/legacy-types';
+import type { LegacyLocalJob, LegacyNgoJob, LegacyRemoteJob, LegacyCruiseJob, LegacyTeachingAbroadJob } from './lib/legacy-types';
 
 const LEGACY_DATA_DIR = 'C:\\Users\\Atom\\Documents\\jobvacancy.co.ke-main-themechange\\data';
+// Separate legacy repo (Python scrapers) — cruise ship + teaching-abroad were
+// scraped here but never made it into the Next.js site's data/ folder above.
+const SCRAPER_REPO_DIR = 'C:\\Users\\Atom\\Documents\\jobs-in-kenya-scrapper';
+// Historical seed only — capped at 50 each per user's explicit call not to
+// dump thousands of stale rows; the ongoing scrapers (scrape-cruise-jobs.ts,
+// scrape-teaching-abroad-jobs.ts) pick up new postings from here on.
+const HISTORICAL_SEED_LIMIT = 50;
 const PLACEHOLDER_CONTACT_EMAIL = 'jobs@jobvacancy.co.ke';
 // local-jobs.json's own "how_to_apply" text points at whatever inbox was set
 // when it was scraped (some rows say hr@legithustle.co.ke, a different site) —
@@ -38,7 +52,7 @@ const LOCAL_JOBS_APPLY_EMAIL = 'hr@jobvacancy.co.ke';
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 const limit = Number(args.find((a) => a.startsWith('--limit='))?.split('=')[1] ?? Infinity);
-const onlySource = args.find((a) => a.startsWith('--only='))?.split('=')[1] as 'remote' | 'ngo' | 'local' | undefined;
+const onlySource = args.find((a) => a.startsWith('--only='))?.split('=')[1] as 'remote' | 'ngo' | 'local' | 'cruise' | 'teaching-abroad' | undefined;
 
 interface NewJobRow {
   title: string;
@@ -214,6 +228,85 @@ function buildLocalRows(categoryId: Map<string, string>, locationId: Map<string,
     });
 }
 
+/** One-time historical seed only (see HISTORICAL_SEED_LIMIT) — the ongoing
+ * scrape-cruise-jobs.ts picks up new postings from here on. */
+function buildCruiseRows(categoryId: Map<string, string>, locationId: Map<string, string>): NewJobRow[] {
+  const raw = readFileSync(path.join(SCRAPER_REPO_DIR, 'cruise_ship_jobs_scraper', 'enhanced_cruise_jobs_20251223_172935.json'), 'utf8');
+  const data = JSON.parse(raw) as { jobs: LegacyCruiseJob[] };
+  const cat = categoryId.get(CRUISE_CATEGORY_SLUG)!;
+  const loc = locationId.get(ABROAD_LOCATION_SLUG)!;
+
+  return data.jobs
+    .filter((j) => j.url && j.title && !isLikelyNonJobListing(j.title))
+    .slice(0, HISTORICAL_SEED_LIMIT)
+    .map((j): NewJobRow => {
+      const companyName = j.source === 'Viking Cruises' ? 'Viking Cruises' : cleanCompanyName(j.employer || 'Cruise Line Employer');
+      const description = repairMojibake(decodeHtmlEntities(j.description ?? '')).trim() || j.title;
+      return {
+        title: repairMojibake(decodeHtmlEntities(j.title)),
+        company_name: companyName,
+        company_logo_url: null,
+        description,
+        category_id: cat,
+        location_id: loc,
+        job_type: mapJobType(`${j.title} ${description}`),
+        is_remote: true,
+        is_international: true,
+        ...parseSalary(undefined),
+        application_method: 'url',
+        application_value: j.apply_url || j.url,
+        deadline: null,
+        status: 'approved',
+        contact_name: null,
+        contact_email: PLACEHOLDER_CONTACT_EMAIL,
+        created_at: toPastIso(j.scraped_at),
+        approved_at: new Date().toISOString(),
+        source_url: j.url,
+        source: j.source,
+        ai_enhancement: deriveEnhancementFromCruiseJob(j),
+      };
+    });
+}
+
+/** One-time historical seed only (see HISTORICAL_SEED_LIMIT) — the ongoing
+ * scrape-teaching-abroad-jobs.ts picks up new postings from here on. */
+function buildTeachingAbroadRows(categoryId: Map<string, string>, locationId: Map<string, string>): NewJobRow[] {
+  const raw = readFileSync(path.join(SCRAPER_REPO_DIR, 'teaching_jobs_abroad_scraper', 'data', 'enhanced_teaching_jobs_latest.json'), 'utf8');
+  const data = JSON.parse(raw) as LegacyTeachingAbroadJob[];
+  const cat = categoryId.get(TEACHING_ABROAD_CATEGORY_SLUG)!;
+  const loc = locationId.get(ABROAD_LOCATION_SLUG)!;
+
+  return data
+    .filter((j) => j.url && j.title && !isLikelyNonJobListing(j.title))
+    .slice(0, HISTORICAL_SEED_LIMIT)
+    .map((j): NewJobRow => {
+      const description = repairMojibake(decodeHtmlEntities(j.description ?? '')).trim() || j.title;
+      return {
+        title: repairMojibake(decodeHtmlEntities(j.title)),
+        company_name: cleanCompanyName(j.employer || 'International School'),
+        company_logo_url: null,
+        description,
+        category_id: cat,
+        location_id: loc,
+        job_type: mapJobType(`${j.title} ${description}`),
+        is_remote: true,
+        is_international: true,
+        ...parseSalary(undefined),
+        application_method: 'url',
+        application_value: j.apply_url || j.url,
+        deadline: null,
+        status: 'approved',
+        contact_name: null,
+        contact_email: PLACEHOLDER_CONTACT_EMAIL,
+        created_at: toPastIso(j.posted_date),
+        approved_at: new Date().toISOString(),
+        source_url: j.url,
+        source: j.source,
+        ai_enhancement: deriveEnhancementFromTeachingAbroadJob(j),
+      };
+    });
+}
+
 async function main() {
   const supabase = getScriptSupabaseAdmin();
 
@@ -231,6 +324,8 @@ async function main() {
   if (!onlySource || onlySource === 'remote') rows = rows.concat(buildRemoteRows(categoryId, locationId));
   if (!onlySource || onlySource === 'ngo') rows = rows.concat(buildNgoRows(categoryId, locationId));
   if (!onlySource || onlySource === 'local') rows = rows.concat(buildLocalRows(categoryId, locationId));
+  if (!onlySource || onlySource === 'cruise') rows = rows.concat(buildCruiseRows(categoryId, locationId));
+  if (!onlySource || onlySource === 'teaching-abroad') rows = rows.concat(buildTeachingAbroadRows(categoryId, locationId));
 
   const invalid = rows.filter((r) => !r.category_id || !r.location_id || !r.title || !r.company_name);
   if (invalid.length > 0) {

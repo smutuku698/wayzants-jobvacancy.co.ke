@@ -11,6 +11,8 @@ export const LOCAL_JOBS_APPLY_EMAIL = 'hr@jobvacancy.co.ke';
 export const FALLBACK_CATEGORY_SLUG = 'admin-secretarial-jobs';
 export const REMOTE_CATEGORY_SLUG = 'online-remote-jobs';
 export const NGO_CATEGORY_SLUG = 'ngo-jobs';
+export const TEACHING_ABROAD_CATEGORY_SLUG = 'teaching-jobs-abroad';
+export const CRUISE_CATEGORY_SLUG = 'cruise-ship-jobs';
 
 // Ordered so more specific/discriminative keywords are checked before generic
 // ones. Matched against title first (most reliable), then industry, then the
@@ -186,15 +188,20 @@ export function mapNgoJobLocation(location: string): string {
   return 'international-remote';
 }
 
+/** Cruise ship crew and teaching-abroad placements are inherently overseas — always the fixed international-remote location slug, same convention mapNgoJobLocation falls back to for non-Kenya postings. */
+export const ABROAD_LOCATION_SLUG = 'international-remote';
+
 export type JobType = 'full_time' | 'part_time' | 'contract' | 'internship' | 'volunteer';
 
 /** Maps free-text employment type (e.g. local-jobs.json's "nature_of_job", or a remote job's title/tags) onto the fixed job_type enum. */
 export function mapJobType(text: string): JobType {
   const t = text.toLowerCase();
-  if (t.includes('intern')) return 'internship';
-  if (t.includes('volunteer')) return 'volunteer';
-  if (t.includes('contract')) return 'contract';
-  if (t.includes('part') && t.includes('time')) return 'part_time';
-  if (t.includes('part-time')) return 'part_time';
+  // Word-boundary, not .includes() — "intern" bare .includes() matched inside
+  // "international" (same trap CATEGORY_KEYWORDS above already had to guard
+  // against), misclassifying e.g. "international teaching" roles as internships.
+  if (matchesKeyword(t, 'intern') || matchesKeyword(t, 'internship')) return 'internship';
+  if (matchesKeyword(t, 'volunteer')) return 'volunteer';
+  if (matchesKeyword(t, 'contract')) return 'contract';
+  if (t.includes('part-time') || (matchesKeyword(t, 'part') && matchesKeyword(t, 'time'))) return 'part_time';
   return 'full_time';
 }

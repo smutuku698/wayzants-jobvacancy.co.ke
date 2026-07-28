@@ -98,8 +98,12 @@ const relatedCategoryLinks = relatedCategorySlugs
 
       {job.ai_enhancement && (
         <div class="mt-8 border-t border-slate-100 pt-6">
+          {job.ai_enhancement.jobSummary && (
+            <p class="leading-relaxed text-slate-700">{job.ai_enhancement.jobSummary}</p>
+          )}
+
           {job.ai_enhancement.skills.length > 0 && (
-            <div>
+            <div class="mt-6">
               <h2 class="text-base font-bold text-brand-dark">Key Skills</h2>
               <div class="mt-3 flex flex-wrap gap-2">
                 {job.ai_enhancement.skills.map((skill) => (
@@ -113,6 +117,41 @@ const relatedCategoryLinks = relatedCategorySlugs
             <div class="mt-6">
               <h2 class="text-base font-bold text-brand-dark">Kenya Salary Estimate</h2>
               <p class="mt-2 text-sm text-slate-600">{job.ai_enhancement.kenyaSalaryEstimate}</p>
+            </div>
+          )}
+
+          {job.ai_enhancement.companyInsights && (
+            <div class="mt-6">
+              <h2 class="text-base font-bold text-brand-dark">Company Insights</h2>
+              <p class="mt-2 text-sm leading-relaxed text-slate-600">{job.ai_enhancement.companyInsights}</p>
+            </div>
+          )}
+
+          {job.ai_enhancement.workEnvironment && (
+            <div class="mt-6">
+              <h2 class="text-base font-bold text-brand-dark">Work Environment &amp; Culture</h2>
+              <p class="mt-2 text-sm leading-relaxed text-slate-600">{job.ai_enhancement.workEnvironment}</p>
+            </div>
+          )}
+
+          {job.ai_enhancement.careerGrowth && (
+            <div class="mt-6">
+              <h2 class="text-base font-bold text-brand-dark">Career Growth &amp; Development</h2>
+              <p class="mt-2 text-sm leading-relaxed text-slate-600">{job.ai_enhancement.careerGrowth}</p>
+            </div>
+          )}
+
+          {job.ai_enhancement.benefits && (
+            <div class="mt-6">
+              <h2 class="text-base font-bold text-brand-dark">Benefits &amp; Compensation</h2>
+              <p class="mt-2 text-sm leading-relaxed text-slate-600">{job.ai_enhancement.benefits}</p>
+            </div>
+          )}
+
+          {job.ai_enhancement.marketContext && (
+            <div class="mt-6">
+              <h2 class="text-base font-bold text-brand-dark">Market Context &amp; Industry Insights</h2>
+              <p class="mt-2 text-sm leading-relaxed text-slate-600">{job.ai_enhancement.marketContext}</p>
             </div>
           )}
 

@@ -3,7 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import JobCard from '../components/JobCard.astro';
 import CategoryCard from '../components/CategoryCard.astro';
 import FeaturedJobCard from '../components/FeaturedJobCard.astro';
-import { getLatestJobs } from '../lib/queries';
+import { getLatestJobs, getJobsByCategorySlug, getLatestLocalJobs } from '../lib/queries';
 import { NAV_CATEGORIES, NAV_LOCATIONS } from '../lib/taxonomy';
 import tutor1 from '../assets/tutor1.jpg';
 import tutor2 from '../assets/tutor2.jpg';
@@ -19,6 +19,9 @@ const allJobs = await getLatestJobs(12).catch(() => []);
 const featuredJobs = allJobs.slice(0, 6);
 const latestJobs = allJobs.slice(6).length > 0 ? allJobs.slice(6) : allJobs;
 const FEATURED_ACCENTS = ['pink', 'purple', 'green', 'orange', 'teal', 'amber'] as const;
+
+const cruiseJobs = await getJobsByCategorySlug('cruise-ship-jobs', 3).catch(() => []);
+const localKenyaJobs = await getLatestLocalJobs(3).catch(() => []);
 
 const trending = [
   { name: 'NGO Jobs', href: '/category/ngo-jobs/' },
@@ -210,30 +213,51 @@ const description =
     </div>
   </section>
 
-  <!-- Steps -->
-  <section class="bg-white py-16">
-    <div class="mx-auto max-w-6xl px-4 text-center sm:px-6">
-      <h2 class="text-3xl font-bold text-brand-dark">Finding your next job is easy</h2>
-      <div class="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
-        {[
-          { step: 'Step 1', title: 'SEARCH BY CATEGORY OR CITY', icon: 'M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm10 2-4.35-4.35' },
-          { step: 'Step 2', title: 'APPLY DIRECTLY — 100% FREE', icon: 'M5 12h14M13 6l6 6-6 6' },
-          { step: 'Step 3', title: 'GET HIRED', icon: 'm5 13 4 4L19 7' },
-        ].map((s) => (
-          <div class="card p-6 text-left">
-            <p class="text-sm font-semibold text-brand-green-dark">{s.step}</p>
-            <h3 class="mt-2 text-lg font-bold text-brand-dark">{s.title}</h3>
-            <div class="mt-6 flex h-32 items-center justify-center rounded bg-white">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d={s.icon} stroke="var(--color-brand-orange)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-            </div>
+  <!-- Latest cruise ship jobs -->
+  {cruiseJobs.length > 0 && (
+    <section class="bg-white py-16">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6">
+        <div class="flex items-end justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-bold text-brand-dark sm:text-3xl">Cruise Ship Jobs</h2>
+            <p class="mt-1 text-slate-500">Crew and onboard positions on cruise ships worldwide.</p>
           </div>
-        ))}
+          <a href="/category/cruise-ship-jobs/" class="hidden shrink-0 text-sm font-semibold text-brand-orange hover:underline sm:block">View all &rarr;</a>
+        </div>
+        <div class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {cruiseJobs.map((job, i) => (
+            <FeaturedJobCard job={job} accent={FEATURED_ACCENTS[i % FEATURED_ACCENTS.length]} />
+          ))}
+        </div>
+        <div class="mt-8 text-center sm:hidden">
+          <a href="/category/cruise-ship-jobs/" class="btn-secondary">View all cruise ship jobs</a>
+        </div>
       </div>
-      <p class="mt-12 text-xl font-semibold text-brand-dark">100% free, always.</p>
-      <p class="mt-2 text-sm text-slate-500">No fees to browse, apply, or post a job. Every listing is reviewed before it goes live.</p>
-      <a href="/jobs/" class="btn-primary mt-6 inline-flex">Browse Jobs Now</a>
-    </div>
-  </section>
+    </section>
+  )}
+
+  <!-- Latest local Kenya jobs -->
+  {localKenyaJobs.length > 0 && (
+    <section class="bg-cream py-16">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6">
+        <div class="flex items-end justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-bold text-brand-dark sm:text-3xl">Latest Local Jobs in Kenya</h2>
+            <p class="mt-1 text-slate-500">Fresh vacancies based right here in Kenya — Nairobi, Mombasa, Kisumu and beyond.</p>
+          </div>
+          <a href="/jobs/" class="hidden shrink-0 text-sm font-semibold text-brand-orange hover:underline sm:block">View all &rarr;</a>
+        </div>
+        <div class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {localKenyaJobs.map((job, i) => (
+            <FeaturedJobCard job={job} accent={FEATURED_ACCENTS[i % FEATURED_ACCENTS.length]} />
+          ))}
+        </div>
+        <div class="mt-8 text-center sm:hidden">
+          <a href="/jobs/" class="btn-secondary">View all local jobs</a>
+        </div>
+      </div>
+    </section>
+  )}
 
   <!-- Latest jobs -->
   <section class="bg-cream py-16">
@@ -334,6 +358,31 @@ const description =
           </a>
         ))}
       </div>
+    </div>
+  </section>
+
+  <!-- Steps -->
+  <section class="bg-white py-16">
+    <div class="mx-auto max-w-6xl px-4 text-center sm:px-6">
+      <h2 class="text-3xl font-bold text-brand-dark">Finding your next job is easy</h2>
+      <div class="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
+        {[
+          { step: 'Step 1', title: 'SEARCH BY CATEGORY OR CITY', icon: 'M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm10 2-4.35-4.35' },
+          { step: 'Step 2', title: 'APPLY DIRECTLY — 100% FREE', icon: 'M5 12h14M13 6l6 6-6 6' },
+          { step: 'Step 3', title: 'GET HIRED', icon: 'm5 13 4 4L19 7' },
+        ].map((s) => (
+          <div class="card p-6 text-left">
+            <p class="text-sm font-semibold text-brand-green-dark">{s.step}</p>
+            <h3 class="mt-2 text-lg font-bold text-brand-dark">{s.title}</h3>
+            <div class="mt-6 flex h-32 items-center justify-center rounded bg-white">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d={s.icon} stroke="var(--color-brand-orange)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            </div>
+          </div>
+        ))}
+      </div>
+      <p class="mt-12 text-xl font-semibold text-brand-dark">100% free, always.</p>
+      <p class="mt-2 text-sm text-slate-500">No fees to browse, apply, or post a job. Every listing is reviewed before it goes live.</p>
+      <a href="/jobs/" class="btn-primary mt-6 inline-flex">Browse Jobs Now</a>
     </div>
   </section>
 </Layout>

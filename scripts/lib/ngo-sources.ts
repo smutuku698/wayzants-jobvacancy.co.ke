@@ -17,6 +17,8 @@ export interface NgoJobListing {
   url: string;
   pubDate: string;
   tags: string[];
+  /** Old-style function category (Finance, Management, Healthcare...) for template-fallback selection — not the DB category_id, which is always ngo-jobs. */
+  category: string;
   source: 'ngojobsinafrica' | 'reliefweb';
 }
 
@@ -55,6 +57,22 @@ function extractLocation(title: string, description: string): string {
   const text = `${title} ${description}`;
   for (const location of KENYA_LOCATIONS) if (text.includes(location)) return location;
   return 'Kenya';
+}
+
+// Old-style function category, for template-fallback selection only (see
+// template-fallbacks.ts) — not the DB category_id, which stays fixed at
+// ngo-jobs regardless. Ported as-is from the old site's mapCategory().
+function mapCategory(title: string, description: string): string {
+  const text = `${title} ${description}`.toLowerCase();
+  if (text.includes('finance') || text.includes('accountant') || text.includes('budget')) return 'Finance';
+  if (text.includes('communication') || text.includes('advocacy') || text.includes('marketing')) return 'Marketing';
+  if (text.includes('manager') || text.includes('coordinator') || text.includes('director')) return 'Management';
+  if (text.includes('data') || text.includes('m&e') || text.includes('monitoring')) return 'Data';
+  if (text.includes('it ') || text.includes('technology') || text.includes('developer')) return 'Programming';
+  if (text.includes('hr') || text.includes('human resource')) return 'HR';
+  if (text.includes('health') || text.includes('medical') || text.includes('nurse')) return 'Healthcare';
+  if (text.includes('education') || text.includes('teacher')) return 'Education';
+  return 'Other';
 }
 
 // The naive "last segment after ' - '" heuristic sometimes grabs a stray
@@ -125,6 +143,7 @@ export async function fetchNgoJobsInAfrica(): Promise<NgoJobListing[]> {
           url: link,
           pubDate: pubDate.toISOString(),
           tags: extractTags(title, description),
+          category: mapCategory(title, description),
           source: 'ngojobsinafrica',
         };
       })
@@ -188,6 +207,7 @@ export async function fetchReliefWebRss(): Promise<NgoJobListing[]> {
           url: link,
           pubDate: pubDate.toISOString(),
           tags: extractTags(title, description),
+          category: mapCategory(title, description),
           source: 'reliefweb',
         };
       })

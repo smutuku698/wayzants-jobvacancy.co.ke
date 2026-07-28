@@ -29,6 +29,21 @@ const EM_DASH = String.fromCharCode(226, 128, 148); // U+2014 mojibake -> em das
 const BULLET = String.fromCharCode(226, 128, 162); // U+2022 mojibake -> bullet
 const NARROW_NBSP = String.fromCharCode(226, 128, 175); // U+202F mojibake -> space
 
+// teachingabroaddirect.co.uk (and presumably other CMS-driven sources) produce
+// a *different* mojibake: the same UTF-8-bytes-read-one-byte-at-a-time error,
+// but decoded as Windows-1252 instead of Latin-1. cp1252 redefines the C1
+// control range (0x80-0x9F) as visible punctuation, so instead of invisible
+// control characters this shows up as visible extra glyphs — e.g. an en dash
+// (UTF-8 bytes E2 80 93) renders as "â€"" (â, €, then cp1252's 0x93 = left
+// double quote) rather than the Latin-1 variant's "â" + two C1 controls.
+const CP1252_RIGHT_SINGLE_QUOTE = String.fromCharCode(226, 8364, 8482); // U+2019 mojibake (cp1252) -> '
+const CP1252_LEFT_SINGLE_QUOTE = String.fromCharCode(226, 8364, 732); // U+2018 mojibake (cp1252) -> '
+const CP1252_LEFT_DOUBLE_QUOTE = String.fromCharCode(226, 8364, 339); // U+201C mojibake (cp1252) -> "
+const CP1252_EN_DASH = String.fromCharCode(226, 8364, 8220); // U+2013 mojibake (cp1252) -> en dash
+const CP1252_EM_DASH = String.fromCharCode(226, 8364, 8221); // U+2014 mojibake (cp1252) -> em dash
+const CP1252_BULLET = String.fromCharCode(226, 8364, 162); // U+2022 mojibake (cp1252) -> bullet
+const CP1252_NARROW_NBSP = String.fromCharCode(226, 8364, 175); // U+202F mojibake (cp1252) -> space
+
 const MOJIBAKE_SEQUENCES: [needle: string, replacement: string][] = [
   [RIGHT_SINGLE_QUOTE, "'"],
   [LEFT_SINGLE_QUOTE, "'"],
@@ -38,6 +53,13 @@ const MOJIBAKE_SEQUENCES: [needle: string, replacement: string][] = [
   [EM_DASH, String.fromCharCode(8212)],
   [BULLET, String.fromCharCode(8226)],
   [NARROW_NBSP, ' '],
+  [CP1252_RIGHT_SINGLE_QUOTE, "'"],
+  [CP1252_LEFT_SINGLE_QUOTE, "'"],
+  [CP1252_LEFT_DOUBLE_QUOTE, '"'],
+  [CP1252_EN_DASH, String.fromCharCode(8211)],
+  [CP1252_EM_DASH, String.fromCharCode(8212)],
+  [CP1252_BULLET, String.fromCharCode(8226)],
+  [CP1252_NARROW_NBSP, ' '],
 ];
 
 /**

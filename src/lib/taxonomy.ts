@@ -26,6 +26,7 @@ export const NAV_CATEGORIES: NavItem[] = [
   { slug: 'customer-service-jobs', name: 'Customer Service Jobs' },
   { slug: 'online-remote-jobs', name: 'Online & Remote Jobs' },
   { slug: 'teaching-jobs-abroad', name: 'Teaching Jobs Abroad' },
+  { slug: 'cruise-ship-jobs', name: 'Cruise Ship Jobs' },
 ];
 
 export const NAV_LOCATIONS: NavItem[] = [
@@ -57,6 +58,8 @@ export const RELATED_CATEGORIES: Record<string, string[]> = {
   'teaching-jobs-abroad': ['teaching-jobs', 'tsc-jobs'],
   'government-jobs': ['ngo-jobs'],
   'ngo-jobs': ['government-jobs'],
+  'cruise-ship-jobs': ['hospitality-tourism-jobs'],
+  'hospitality-tourism-jobs': ['cruise-ship-jobs'],
 };
 
 export const TOP_NAV_CATEGORIES: NavItem[] = [

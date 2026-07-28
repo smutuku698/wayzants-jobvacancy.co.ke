@@ -7,6 +7,7 @@ export const prerender = false;
 
 const MAX_LOGO_BYTES = 2 * 1024 * 1024;
 const ALLOWED_LOGO_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const ALLOWED_CURRENCIES = new Set(['KES', 'USD', 'GBP', 'EUR']);
 
 function redirectTo(path: string) {
   return new Response(null, { status: 303, headers: { Location: path } });
@@ -55,6 +56,8 @@ export const POST: APIRoute = async ({ request }) => {
   const salaryMaxRaw = get('salary_max');
   const salary_min = salaryMinRaw ? Number(salaryMinRaw) : null;
   const salary_max = salaryMaxRaw ? Number(salaryMaxRaw) : null;
+  const salaryCurrencyRaw = get('salary_currency').toUpperCase();
+  const salary_currency = ALLOWED_CURRENCIES.has(salaryCurrencyRaw) ? salaryCurrencyRaw : 'KES';
 
   let company_logo_url: string | null = null;
   const logo = formData.get('logo');
@@ -91,6 +94,7 @@ export const POST: APIRoute = async ({ request }) => {
       is_international,
       salary_min,
       salary_max,
+      salary_currency,
       application_method,
       application_value,
       deadline,

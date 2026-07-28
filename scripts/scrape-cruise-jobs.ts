@@ -1,16 +1,14 @@
-// Ongoing scraper for worldwide remote jobs — same sources/filters as the old
-// site's lib/all-jobs-fetcher.ts (see scripts/lib/remote-sources.ts), writing
-// straight into Supabase instead of a JSON file. Safe to rerun on a schedule:
-// upserts on source_url, and only pays for AI enhancement on genuinely new
-// jobs (existing rows keep whatever enhancement they already have).
+// Ongoing scraper for cruise ship crew jobs (AllCruiseJobs.com, see
+// scripts/lib/cruise-sources.ts), writing straight into Supabase. Safe to
+// rerun — upserts on source_url, reuses existing slugs, only pays for the
+// detail-page fetch and AI enhancement on genuinely new jobs.
 
 import 'dotenv/config';
 import { getScriptSupabaseAdmin } from './lib/supabase-admin';
 import { uniqueSlug } from './lib/slug';
-import { parseSalary } from './lib/salary-parser';
-import { mapJobType, REMOTE_CATEGORY_SLUG } from './lib/category-mapping';
+import { mapJobType, CRUISE_CATEGORY_SLUG, ABROAD_LOCATION_SLUG } from './lib/category-mapping';
 import { liveEnhance } from './lib/ai-enhance';
-import { fetchAllRemoteJobs } from './lib/remote-sources';
+import { fetchAllCruiseJobListings, fetchCruiseJobDetails } from './lib/cruise-sources';
 
 const PLACEHOLDER_CONTACT_EMAIL = 'jobs@jobvacancy.co.ke';
 
@@ -18,11 +16,6 @@ const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 const limit = Number(args.find((a) => a.startsWith('--limit='))?.split('=')[1] ?? Infinity);
 
-// Maps source_url -> existing slug. Postgres validates NOT NULL constraints
-// (like `slug`) on the upsert's insert-candidate row even when it resolves to
-// an UPDATE via ON CONFLICT — omitting `slug` for an "existing row" update
-// isn't safe like omitting a nullable column (e.g. ai_enhancement) is; every
-// upsert call must supply a slug, so existing rows reuse their current one.
 async function fetchExistingSlugsByUrl(supabase: ReturnType<typeof getScriptSupabaseAdmin>): Promise<Map<string, string>> {
   const map = new Map<string, string>();
   const BATCH_SIZE = 1000;
@@ -51,13 +44,14 @@ async function main() {
 
   const categoryId = new Map((categories ?? []).map((c) => [c.slug, c.id]));
   const locationId = new Map((locations ?? []).map((l) => [l.slug, l.id]));
-  const catId = categoryId.get(REMOTE_CATEGORY_SLUG);
-  const locId = locationId.get('international-remote');
-  if (!catId || !locId) throw new Error('online-remote-jobs category or international-remote location not found');
+  const catId = categoryId.get(CRUISE_CATEGORY_SLUG);
+  const locId = locationId.get(ABROAD_LOCATION_SLUG);
+  if (!catId) throw new Error('cruise-ship-jobs category not found');
+  if (!locId) throw new Error(`${ABROAD_LOCATION_SLUG} location not found`);
 
-  console.log('Fetching remote jobs from WeWorkRemotely, Remotive, RemoteOK, Arbeitnow...');
-  const allJobs = await fetchAllRemoteJobs();
-  console.log(`Fetched ${allJobs.length} unique remote jobs matching filters.`);
+  console.log('Fetching cruise ship jobs from AllCruiseJobs.com...');
+  const allJobs = await fetchAllCruiseJobListings();
+  console.log(`Fetched ${allJobs.length} unique cruise ship job listings.`);
   const jobs = Number.isFinite(limit) ? allJobs.slice(0, limit) : allJobs;
 
   const existingSlugs = await fetchExistingSlugsByUrl(supabase);
@@ -65,8 +59,10 @@ async function main() {
 
   if (dryRun) {
     for (const job of jobs.slice(0, 20)) {
+      const isNew = !existingSlugs.has(job.url);
+      const detailed = isNew ? await fetchCruiseJobDetails(job) : job;
       console.log('\n---');
-      console.log(JSON.stringify({ title: job.title, company: job.company, source: job.source, url: job.url, pubDate: job.pubDate, isNew: !existingSlugs.has(job.url) }, null, 2));
+      console.log(JSON.stringify({ title: detailed.title, company: detailed.company, url: detailed.url, isNew }, null, 2));
     }
     console.log(`\nDRY RUN — ${jobs.length} rows would be processed, nothing written.`);
     return;
@@ -78,50 +74,50 @@ async function main() {
 
   for (const job of jobs) {
     const isNew = !existingSlugs.has(job.url);
-    const salary = parseSalary(job.salary);
+    const detailed = isNew ? await fetchCruiseJobDetails(job) : job;
 
     const row: Record<string, unknown> = {
-      title: job.title,
-      company_name: job.company,
+      title: detailed.title,
+      company_name: detailed.company || 'Cruise Line Employer',
       company_logo_url: null,
-      description: job.description || job.title,
+      description: detailed.description || detailed.title,
       category_id: catId,
       location_id: locId,
-      job_type: mapJobType(`${job.title} ${job.tags.join(' ')}`),
+      job_type: mapJobType(`${detailed.title} ${detailed.description}`),
       is_remote: true,
       is_international: true,
-      salary_min: salary.salary_min,
-      salary_max: salary.salary_max,
-      salary_currency: salary.salary_currency,
+      salary_min: null,
+      salary_max: null,
+      salary_currency: 'KES',
       application_method: 'url',
-      application_value: job.url,
+      application_value: detailed.url,
       deadline: null,
       status: 'approved',
       contact_name: null,
       contact_email: PLACEHOLDER_CONTACT_EMAIL,
-      created_at: job.pubDate,
-      source_url: job.url,
-      source: job.source,
+      created_at: detailed.pubDate,
+      source_url: detailed.url,
+      source: detailed.source,
     };
 
     if (isNew) {
       row.approved_at = new Date().toISOString();
       row.ai_enhancement = await liveEnhance(supabase, {
-        title: job.title,
-        company: job.company,
-        description: job.description,
-        categorySlug: REMOTE_CATEGORY_SLUG,
-        sourceCategory: job.category,
+        title: detailed.title,
+        company: detailed.company || 'Cruise Line Employer',
+        description: detailed.description,
+        categorySlug: CRUISE_CATEGORY_SLUG,
+        sourceCategory: detailed.category,
       });
-      row.slug = await uniqueSlug(supabase, job.title, job.company);
+      row.slug = await uniqueSlug(supabase, detailed.title, detailed.company || 'Cruise Line Employer');
     } else {
-      row.slug = existingSlugs.get(job.url);
+      row.slug = existingSlugs.get(detailed.url);
     }
 
     const { error } = await supabase.from('jobs').upsert(row, { onConflict: 'source_url' });
     if (error) {
       failed += 1;
-      console.error(`Failed: ${job.title} (${job.source}) — ${error.message}`);
+      console.error(`Failed: ${detailed.title} — ${error.message}`);
     } else if (isNew) {
       inserted += 1;
     } else {
