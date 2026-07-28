@@ -175,9 +175,14 @@ const relatedCategoryLinks = relatedCategorySlugs
       )}
 
       <div class="mt-8 border-t border-slate-100 pt-6 text-center">
-        <a href={applyHref} rel="nofollow noopener" target={job.application_method === 'url' ? '_blank' : undefined} class="btn-primary">
-          Apply Now
-        </a>
+        <div class="flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <a href={applyHref} rel="nofollow noopener" target={job.application_method === 'url' ? '_blank' : undefined} class="btn-primary">
+            Apply Now
+          </a>
+          <a href="/cv-and-resume-services/" class="btn-secondary">
+            Get Best CV/Resume for All Jobs Now!
+          </a>
+        </div>
         {job.is_international && (
           <p class="mt-3 text-xs text-slate-400">This is a 100% remote/virtual role — no relocation required.</p>
         )}
