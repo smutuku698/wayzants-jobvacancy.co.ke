@@ -214,9 +214,8 @@ export interface NewJobSubmission {
 }
 
 export async function submitJob(submission: NewJobSubmission) {
-  const { data, error } = await getSupabase().from('jobs').insert(submission).select('id, slug').single();
+  const { error } = await getSupabase().from('jobs').insert(submission);
   if (error) throw error;
-  return data;
 }
 
 // ---------------------------------------------------------------------------

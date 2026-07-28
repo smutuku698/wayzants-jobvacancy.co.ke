@@ -2,7 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "jobvacancy-co-ke",
   "compatibility_date": "2025-11-01",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": [],
   "r2_buckets": [
     {
       "binding": "JOB_IMAGES",

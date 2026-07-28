@@ -18,10 +18,10 @@
     "scrape:local": "tsx scripts/scrape-local-jobs.ts"
   },
   "dependencies": {
-    "@astrojs/cloudflare": "^14.1.5",
+    "@astrojs/cloudflare": "^13.7.0",
     "@supabase/supabase-js": "^2.110.9",
     "@tailwindcss/vite": "^4.3.3",
-    "astro": "^7.1.4",
+    "astro": "^6.4.8",
     "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
@@ -33,5 +33,8 @@
     "tsx": "^4.19.2",
     "typescript": "^6.0.3",
     "wrangler": "^4.34.0"
+  },
+  "overrides": {
+    "vite": "7.3.6"
   }
 }
