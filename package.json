@@ -15,7 +15,9 @@
     "import-legacy": "tsx scripts/import-legacy-jobs.ts",
     "scrape:remote": "tsx scripts/scrape-remote-jobs.ts",
     "scrape:ngo": "tsx scripts/scrape-ngo-jobs.ts",
-    "scrape:local": "tsx scripts/scrape-local-jobs.ts"
+    "scrape:local": "tsx scripts/scrape-local-jobs.ts",
+    "scrape:cruise": "tsx scripts/scrape-cruise-jobs.ts",
+    "scrape:teaching-abroad": "tsx scripts/scrape-teaching-abroad-jobs.ts"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^13.7.0",
