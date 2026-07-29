@@ -10,9 +10,6 @@ function waLink(message: string) {
 const simpleTierWaLink = waLink(
   'Hi! I would like to order the Simple CV package (KES 500 — 3 CVs for 3 different jobs, PDF or Word) from JobVacancy.co.ke.'
 );
-const themedTierWaLink = waLink(
-  'Hi! I would like to order the Themed CV package (KES 1000 — 3 CVs for 3 different jobs, PDF or Word) from JobVacancy.co.ke.'
-);
 const genericWaLink = waLink('Hi! I am interested in getting a professional CV done through JobVacancy.co.ke. Can you help me?');
 
 const title = 'CV & Resume Writing Services in Kenya — Professional CV Writers | JobVacancy.co.ke';
@@ -58,8 +55,8 @@ const description =
           <li>✓ 3 CVs / edits, for up to 3 different jobs you're applying to</li>
           <li>✓ Delivered as PDF or Word document</li>
         </ul>
-        <a href={themedTierWaLink} target="_blank" rel="noopener noreferrer" class="btn-primary mt-6 w-full">
-          Order Themed CV on WhatsApp
+        <a href="#themed-templates" class="btn-primary mt-6 w-full">
+          Browse Themed Templates
         </a>
       </div>
     </div>
@@ -95,7 +92,7 @@ const description =
     </section>
 
     <!-- Themed template gallery -->
-    <section class="mt-14">
+    <section id="themed-templates" class="mt-14 scroll-mt-20">
       <h2 class="text-xl font-bold text-brand-dark">Themed CV Templates — Pick Your Style</h2>
       <p class="mt-1 text-sm text-slate-500">
         Click any CV example to view it full-size, then order it on WhatsApp — or send us a different theme you like.
@@ -132,7 +129,7 @@ const description =
                   <span class="badge bg-brand-dark/5 text-[10px] text-brand-dark">{t.id}</span>
                 </div>
                 <a href={orderLink} target="_blank" rel="noopener noreferrer" class="btn-secondary mt-3 !py-1.5 text-xs">
-                  Order This CV
+                  Get a CV Like This
                 </a>
               </div>
             </div>
@@ -167,7 +164,7 @@ const description =
     </div>
     <div class="shrink-0 border-t border-white/10 bg-black p-4 text-center">
       <a id="cv-modal-order" href="#" target="_blank" rel="noopener noreferrer" class="btn-primary w-full sm:w-auto">
-        Order Your CV Now
+        Get a CV Like This
       </a>
       <p class="mt-2 text-xs text-white/60">Scroll to view the full CV • Tap ✕ or outside to close</p>
     </div>
