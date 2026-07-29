@@ -1,0 +1,103 @@
+---
+export const prerender = false;
+import Layout from '../../../layouts/Layout.astro';
+
+const reference = Astro.url.searchParams.get('ref') ?? '';
+---
+
+<Layout
+  title="Confirm Payment — JobVacancy.co.ke"
+  description="Confirm your M-Pesa payment to publish your job listing."
+  path="/post-a-job/pay/"
+  noindex
+>
+  <div class="mx-auto max-w-xl px-4 py-20 text-center sm:px-6">
+    <div id="state-pending">
+      <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-brand-orange/10 text-brand-orange">
+        <svg class="animate-spin" width="32" height="32" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2.5" stroke-opacity="0.25"></circle>
+          <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"></path>
+        </svg>
+      </div>
+      <h1 class="mt-6 text-2xl font-extrabold text-brand-dark sm:text-3xl">Check your phone</h1>
+      <p class="mt-3 text-slate-600">
+        Enter your M-Pesa PIN on the prompt sent to your phone to complete the payment. This page will update
+        automatically once it's confirmed — usually within a minute.
+      </p>
+    </div>
+
+    <div id="state-paid" class="hidden">
+      <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-brand-green/10 text-brand-green">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      </div>
+      <h1 class="mt-6 text-2xl font-extrabold text-brand-dark sm:text-3xl">Payment confirmed!</h1>
+      <p class="mt-3 text-slate-600">
+        Thanks — your job is now in review. Our team checks every submission before it goes live, usually within
+        24 hours.
+      </p>
+      <div class="mt-8 flex flex-wrap justify-center gap-3">
+        <a href="/jobs/" class="btn-secondary">Browse Jobs</a>
+        <a href="/" class="btn-primary">Back to Home</a>
+      </div>
+    </div>
+
+    <div id="state-failed" class="hidden">
+      <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-red-600">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"></path></svg>
+      </div>
+      <h1 class="mt-6 text-2xl font-extrabold text-brand-dark sm:text-3xl">Payment didn't go through</h1>
+      <p class="mt-3 text-slate-600">
+        The M-Pesa payment wasn't completed in time or was cancelled. No job has been published — please try
+        again.
+      </p>
+      <div class="mt-8">
+        <a href="/post-a-job/" class="btn-primary">Start Over</a>
+      </div>
+    </div>
+  </div>
+
+  <script define:vars={{ reference }}>
+    const POLL_INTERVAL_MS = 3000;
+    const MAX_ATTEMPTS = 40; // ~2 minutes
+
+    const pendingEl = document.getElementById('state-pending');
+    const paidEl = document.getElementById('state-paid');
+    const failedEl = document.getElementById('state-failed');
+
+    function show(el) {
+      pendingEl.hidden = true;
+      paidEl.hidden = true;
+      failedEl.hidden = true;
+      el.hidden = false;
+    }
+
+    if (!reference) {
+      show(failedEl);
+    } else {
+      let attempts = 0;
+      const poll = async () => {
+        attempts += 1;
+        try {
+          const res = await fetch(`/api/payments/status/?ref=${encodeURIComponent(reference)}`);
+          const body = await res.json();
+          if (body.status === 'paid') {
+            show(paidEl);
+            return;
+          }
+          if (body.status === 'failed') {
+            show(failedEl);
+            return;
+          }
+        } catch {
+          // Transient network hiccup — keep polling until MAX_ATTEMPTS.
+        }
+        if (attempts >= MAX_ATTEMPTS) {
+          show(failedEl);
+          return;
+        }
+        setTimeout(poll, POLL_INTERVAL_MS);
+      };
+      poll();
+    }
+  </script>
+</Layout>

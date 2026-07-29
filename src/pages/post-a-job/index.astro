@@ -15,6 +15,8 @@ const ERROR_MESSAGES: Record<string, string> = {
   invalid_logo: 'Your logo must be a genuine JPG, PNG or WEBP image under 2MB.',
   invalid_fields:
     'Please check your email address and application link/email, and make sure no field is unusually long, then try again.',
+  invalid_phone: 'Please enter a valid Safaricom/Airtel M-Pesa number (e.g. 07XX XXX XXX).',
+  payment_failed: "We couldn't start the M-Pesa payment with that number. Please check it and try again.",
   server_error: 'Something went wrong on our end. Please try again in a moment.',
 };
 
@@ -43,7 +45,7 @@ const description =
       </div>
     )}
 
-    <form method="post" action="/api/jobs/submit" enctype="multipart/form-data" class="card mt-6 space-y-6 p-6 sm:p-8">
+    <form method="post" action="/api/jobs/submit/" enctype="multipart/form-data" class="card mt-6 space-y-6 p-6 sm:p-8">
       <fieldset class="space-y-4">
         <legend class="text-sm font-bold uppercase tracking-wide text-slate-500">Job Details</legend>
         <div>
@@ -184,7 +186,99 @@ const description =
         </label>
       </fieldset>
 
-      <button type="submit" class="btn-primary w-full !py-3 text-base">Submit for Review</button>
+      <input type="hidden" name="pricing_tier" id="pricing_tier" />
+      <input type="hidden" name="mpesa_phone" id="mpesa_phone" />
+
+      <button type="submit" id="submit-job-btn" class="btn-primary w-full !py-3 text-base">Continue to Payment</button>
     </form>
   </div>
+
+  <!-- Tier picker modal — shown after the form's own required-field validation
+       passes, before the real submission (which now requires payment) fires. -->
+  <div id="tier-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-brand-dark/60 p-4" hidden>
+    <div class="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-xl bg-white p-6 shadow-lg sm:p-8">
+      <h2 class="text-xl font-extrabold text-brand-dark">Choose Your Listing</h2>
+      <p class="mt-2 text-sm italic text-slate-500">
+        Due to a rise in scam job postings, we've introduced a small, one-time listing fee to keep this board
+        genuine — thank you for your understanding.
+      </p>
+
+      <div class="mt-5 space-y-3">
+        <label class="tier-option card flex cursor-pointer items-start gap-3 p-4">
+          <input type="radio" name="tier_choice" value="5day" checked class="mt-1 h-4 w-4 text-brand-orange focus:ring-brand-orange" />
+          <span>
+            <span class="block font-bold text-brand-dark">KES 100 — 60-day listing</span>
+            <span class="block text-sm text-slate-500">Featured on the homepage for 5 days, then listed for the rest of the 60 days.</span>
+          </span>
+        </label>
+        <label class="tier-option card flex cursor-pointer items-start gap-3 p-4">
+          <input type="radio" name="tier_choice" value="14day" class="mt-1 h-4 w-4 text-brand-orange focus:ring-brand-orange" />
+          <span>
+            <span class="block font-bold text-brand-dark">KES 200 — 60-day listing</span>
+            <span class="block text-sm text-slate-500">Featured on the homepage for 14 days, then listed for the rest of the 60 days.</span>
+          </span>
+        </label>
+      </div>
+
+      <div class="mt-5">
+        <label for="modal_phone" class="mb-1.5 block text-sm font-semibold text-brand-dark">M-Pesa Phone Number *</label>
+        <input
+          id="modal_phone"
+          type="tel"
+          inputmode="tel"
+          placeholder="e.g. 0722 123 456"
+          class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange"
+        />
+        <p id="modal_phone_error" class="mt-1 hidden text-xs text-red-600">Enter a valid Safaricom/Airtel number.</p>
+      </div>
+
+      <div class="mt-6 flex gap-3">
+        <button type="button" id="tier-modal-cancel" class="btn-secondary flex-1">Cancel</button>
+        <button type="button" id="tier-modal-pay" class="btn-primary flex-1">Pay with M-Pesa</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.querySelector('form[action="/api/jobs/submit"]') as HTMLFormElement;
+    const modal = document.getElementById('tier-modal') as HTMLElement;
+    const tierInput = document.getElementById('pricing_tier') as HTMLInputElement;
+    const phoneInput = document.getElementById('mpesa_phone') as HTMLInputElement;
+    const modalPhone = document.getElementById('modal_phone') as HTMLInputElement;
+    const modalPhoneError = document.getElementById('modal_phone_error') as HTMLElement;
+
+    const KE_PHONE_RE = /^(?:\+?254|0)([17]\d{8})$/;
+
+    function openModal() {
+      modal.hidden = false;
+      document.body.style.overflow = 'hidden';
+    }
+    function closeModal() {
+      modal.hidden = true;
+      document.body.style.overflow = '';
+    }
+
+    form.addEventListener('submit', (event) => {
+      // Already populated by the modal's "Pay with M-Pesa" step — let it through.
+      if (tierInput.value && phoneInput.value) return;
+      event.preventDefault();
+      openModal();
+    });
+
+    document.getElementById('tier-modal-cancel')?.addEventListener('click', closeModal);
+
+    document.getElementById('tier-modal-pay')?.addEventListener('click', () => {
+      const digits = modalPhone.value.replace(/[^\d+]/g, '');
+      if (!KE_PHONE_RE.test(digits)) {
+        modalPhoneError.classList.remove('hidden');
+        return;
+      }
+      modalPhoneError.classList.add('hidden');
+      const tier = (document.querySelector('input[name="tier_choice"]:checked') as HTMLInputElement).value;
+      tierInput.value = tier;
+      phoneInput.value = digits;
+      closeModal();
+      form.requestSubmit();
+    });
+  </script>
 </Layout>

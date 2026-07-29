@@ -158,6 +158,45 @@ export async function getLatestJobs(limit = 12): Promise<JobWithRelations[]> {
   return (data ?? []) as unknown as JobWithRelations[];
 }
 
+/**
+ * Powers the homepage "Featured Jobs" carousel. Paid, currently-active
+ * featured placements are always shown first; if there aren't enough of them
+ * yet (e.g. early on, before paid submissions build up), the rest of the
+ * carousel is backfilled with the most recent approved jobs so the grid
+ * never shows empty gaps — matches this section's pre-existing look, which
+ * was always fully populated.
+ */
+export async function getFeaturedJobs(limit = 6): Promise<JobWithRelations[]> {
+  const { data: featuredData, error: featuredError } = await getSupabase()
+    .from('jobs')
+    .select(JOB_SELECT)
+    .eq('status', 'approved')
+    .eq('is_featured', true)
+    .gt('featured_until', new Date().toISOString())
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (featuredError) throw featuredError;
+  const featured = (featuredData ?? []) as unknown as JobWithRelations[];
+
+  if (featured.length >= limit) return featured;
+
+  const excludeIds = featured.map((j) => j.id);
+  let backfillQuery = getSupabase()
+    .from('jobs')
+    .select(JOB_SELECT)
+    .eq('status', 'approved')
+    .order('created_at', { ascending: false })
+    .limit(limit - featured.length);
+  if (excludeIds.length > 0) {
+    backfillQuery = backfillQuery.not('id', 'in', `(${excludeIds.join(',')})`);
+  }
+  const { data: backfillData, error: backfillError } = await backfillQuery;
+  if (backfillError) throw backfillError;
+  const backfill = (backfillData ?? []) as unknown as JobWithRelations[];
+
+  return [...featured, ...backfill].slice(0, limit);
+}
+
 /** Latest jobs in a specific category by slug — used for the "related categories" fallback/interlinking. */
 export async function getJobsByCategorySlug(categorySlug: string, limit = 6): Promise<JobWithRelations[]> {
   const category = await getCategoryBySlug(categorySlug);
@@ -211,6 +250,11 @@ export interface NewJobSubmission {
   deadline?: string | null;
   contact_name?: string | null;
   contact_email: string;
+  id: string;
+  pricing_tier: '5day' | '14day';
+  payment_status: 'pending';
+  payment_reference: string;
+  payment_phone: string;
 }
 
 export async function submitJob(submission: NewJobSubmission) {
@@ -222,11 +266,18 @@ export async function submitJob(submission: NewJobSubmission) {
 // Admin (service-role) queries — never called from client-exposed code paths.
 // ---------------------------------------------------------------------------
 
+/**
+ * Jobs awaiting admin review. Scoped to payment_status='paid' so abandoned or
+ * still-processing public submissions (payment pending/failed) never clutter
+ * this queue — scraper/legacy-import rows never reach 'pending' status at all,
+ * so this filter only affects the public submission funnel.
+ */
 export async function getPendingJobs(): Promise<JobWithRelations[]> {
   const { data, error } = await getSupabaseAdmin()
     .from('jobs')
     .select(JOB_SELECT)
     .eq('status', 'pending')
+    .eq('payment_status', 'paid')
     .order('created_at', { ascending: false });
   if (error) throw error;
   return (data ?? []) as unknown as JobWithRelations[];
@@ -249,4 +300,54 @@ export async function getJobByIdAdmin(id: string): Promise<Job | null> {
   const { data, error } = await getSupabaseAdmin().from('jobs').select('*').eq('id', id).maybeSingle();
   if (error) throw error;
   return data;
+}
+
+const FEATURED_DAYS: Record<'5day' | '14day', number> = { '5day': 5, '14day': 14 };
+const LISTING_DAYS = 60;
+
+/**
+ * Looks up payment_status by reference for the post-payment polling page.
+ * Must use the service-role client — the job is still status='pending' at
+ * this point, which the public RLS read policy (status='approved' only)
+ * would otherwise hide entirely.
+ */
+export async function getJobPaymentStatusByReference(reference: string): Promise<string | null> {
+  const { data, error } = await getSupabaseAdmin()
+    .from('jobs')
+    .select('payment_status')
+    .eq('payment_reference', reference)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.payment_status ?? null;
+}
+
+/**
+ * Applies a successful M-Pesa payment: featured placement + a 60-day listing
+ * window. Scoped to payment_status='pending' so a redelivered webhook is a
+ * safe no-op (0 rows affected) rather than double-applying the update.
+ */
+export async function markJobPaymentPaid(reference: string, tier: '5day' | '14day'): Promise<void> {
+  const now = Date.now();
+  const featuredUntil = new Date(now + FEATURED_DAYS[tier] * 24 * 60 * 60 * 1000).toISOString();
+  const expiresAt = new Date(now + LISTING_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  const { error } = await getSupabaseAdmin()
+    .from('jobs')
+    .update({
+      payment_status: 'paid',
+      is_featured: true,
+      featured_until: featuredUntil,
+      expires_at: expiresAt,
+    })
+    .eq('payment_reference', reference)
+    .eq('payment_status', 'pending');
+  if (error) throw error;
+}
+
+export async function markJobPaymentFailed(reference: string): Promise<void> {
+  const { error } = await getSupabaseAdmin()
+    .from('jobs')
+    .update({ payment_status: 'failed' })
+    .eq('payment_reference', reference)
+    .eq('payment_status', 'pending');
+  if (error) throw error;
 }

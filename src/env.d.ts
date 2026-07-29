@@ -10,5 +10,6 @@ declare namespace Cloudflare {
   interface Env {
     SUPABASE_SERVICE_ROLE_KEY: string;
     ADMIN_PASSWORD: string;
+    PAYSTACK_SECRET_KEY: string;
   }
 }

@@ -52,6 +52,25 @@ export function locationLabel(job: Pick<Job, 'is_remote' | 'is_international'> &
   return job.locations?.name ?? 'Kenya';
 }
 
+/**
+ * Normalizes common Kenyan mobile number formats (0722..., 254722..., +254722...)
+ * into Paystack's required "+254722000000" shape. Returns null if the input
+ * doesn't look like a plausible Safaricom/Airtel/Telkom mobile number.
+ */
+export function normalizeKenyanPhone(input: string): string | null {
+  const digits = input.replace(/[^\d]/g, '');
+  let nine: string | null = null;
+  if (digits.length === 10 && digits.startsWith('0')) {
+    nine = digits.slice(1);
+  } else if (digits.length === 12 && digits.startsWith('254')) {
+    nine = digits.slice(3);
+  } else if (digits.length === 9) {
+    nine = digits;
+  }
+  if (!nine || !/^[17]\d{8}$/.test(nine)) return null;
+  return `+254${nine}`;
+}
+
 export function slugify(input: string): string {
   return input
     .toLowerCase()

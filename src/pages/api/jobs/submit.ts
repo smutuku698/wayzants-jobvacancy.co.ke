@@ -1,7 +1,8 @@
 import type { APIRoute } from 'astro';
 import { getEnv } from '../../../lib/env';
 import { submitJob } from '../../../lib/queries';
-import { slugify } from '../../../lib/format';
+import { slugify, normalizeKenyanPhone } from '../../../lib/format';
+import { initiateMpesaCharge } from '../../../lib/payments';
 
 export const prerender = false;
 
@@ -9,6 +10,8 @@ const MAX_LOGO_BYTES = 2 * 1024 * 1024;
 const ALLOWED_LOGO_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const ALLOWED_CURRENCIES = new Set(['KES', 'USD', 'GBP', 'EUR']);
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const TIER_PRICES_KES: Record<'5day' | '14day', number> = { '5day': 100, '14day': 200 };
 
 const MAX_LENGTHS = {
   title: 200,
@@ -60,6 +63,8 @@ export const POST: APIRoute = async ({ request }) => {
   const contact_email = get('contact_email');
   const contact_name = get('contact_name') || null;
   const deadline = get('deadline') || null;
+  const pricing_tier = get('pricing_tier') as '5day' | '14day' | '';
+  const mpesa_phone_raw = get('mpesa_phone');
 
   if (
     !title ||
@@ -70,9 +75,20 @@ export const POST: APIRoute = async ({ request }) => {
     !description ||
     !application_method ||
     !application_value ||
-    !contact_email
+    !contact_email ||
+    !pricing_tier ||
+    !mpesa_phone_raw
   ) {
     return redirectTo('/post-a-job/?error=missing_fields');
+  }
+
+  if (pricing_tier !== '5day' && pricing_tier !== '14day') {
+    return redirectTo('/post-a-job/?error=invalid_fields');
+  }
+
+  const mpesa_phone = normalizeKenyanPhone(mpesa_phone_raw);
+  if (!mpesa_phone) {
+    return redirectTo('/post-a-job/?error=invalid_phone');
   }
 
   if (
@@ -137,9 +153,24 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   const slug = `${slugify(`${title}-${company_name}`)}-${crypto.randomUUID().slice(0, 6)}`;
+  const jobId = crypto.randomUUID();
+  const paymentReference = crypto.randomUUID();
+
+  const charge = await initiateMpesaCharge({
+    amountKes: TIER_PRICES_KES[pricing_tier],
+    email: contact_email,
+    phone: mpesa_phone,
+    reference: paymentReference,
+    metadata: { job_id: jobId, tier: pricing_tier },
+  }).catch((): { ok: false; message: string } => ({ ok: false, message: 'network_error' }));
+
+  if (!charge.ok) {
+    return redirectTo('/post-a-job/?error=payment_failed');
+  }
 
   try {
     await submitJob({
+      id: jobId,
       title,
       slug,
       company_name,
@@ -158,10 +189,14 @@ export const POST: APIRoute = async ({ request }) => {
       deadline,
       contact_name,
       contact_email,
+      pricing_tier,
+      payment_status: 'pending',
+      payment_reference: paymentReference,
+      payment_phone: mpesa_phone,
     });
   } catch {
     return redirectTo('/post-a-job/?error=server_error');
   }
 
-  return redirectTo('/post-a-job/thank-you/');
+  return redirectTo(`/post-a-job/pay/?ref=${paymentReference}`);
 };

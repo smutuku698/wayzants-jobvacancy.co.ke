@@ -3,7 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import JobCard from '../components/JobCard.astro';
 import CategoryCard from '../components/CategoryCard.astro';
 import FeaturedJobCard from '../components/FeaturedJobCard.astro';
-import { getLatestJobs, getJobsByCategorySlug, getLatestLocalJobs } from '../lib/queries';
+import { getLatestJobs, getFeaturedJobs, getJobsByCategorySlug, getLatestLocalJobs } from '../lib/queries';
 import { NAV_CATEGORIES, NAV_LOCATIONS } from '../lib/taxonomy';
 import { faqJsonLd } from '../lib/seo';
 import tutor1 from '../assets/tutor1.jpg';
@@ -17,8 +17,13 @@ import review4 from '../assets/review4.jpg';
 import onlineLessons from '../assets/online-lessons.jpg';
 
 const allJobs = await getLatestJobs(12).catch(() => []);
-const featuredJobs = allJobs.slice(0, 6);
-const latestJobs = allJobs.slice(6).length > 0 ? allJobs.slice(6) : allJobs;
+// Paid/featured placements come first; getFeaturedJobs() backfills with the
+// latest approved jobs so this grid is always full, never empty gaps, even
+// before any paid submissions exist.
+const featuredJobs = await getFeaturedJobs(6).catch(() => allJobs.slice(0, 6));
+const featuredIds = new Set(featuredJobs.map((j) => j.id));
+const remainingJobs = allJobs.filter((j) => !featuredIds.has(j.id));
+const latestJobs = remainingJobs.length > 0 ? remainingJobs : allJobs;
 const FEATURED_ACCENTS = ['pink', 'purple', 'green', 'orange', 'teal', 'amber'] as const;
 
 const cruiseJobs = await getJobsByCategorySlug('cruise-ship-jobs', 3).catch(() => []);
@@ -260,7 +265,10 @@ const faqSchema = faqJsonLd(faqs.map((f) => ({ question: f.q, answer: `${f.a} ${
     <div class="mx-auto max-w-7xl px-4 sm:px-6">
       <div class="flex items-end justify-between gap-4">
         <div>
-          <h2 class="text-2xl font-bold text-brand-dark sm:text-3xl">Featured Jobs</h2>
+          <div class="flex items-center gap-2">
+            <h2 class="text-2xl font-bold text-brand-dark sm:text-3xl">Featured Jobs</h2>
+            <span class="badge bg-brand-orange/10 text-brand-orange">Sponsored</span>
+          </div>
           <p class="mt-1 text-slate-500">A handful of standout roles from employers hiring right now.</p>
         </div>
         <a href="/jobs/" class="hidden shrink-0 text-sm font-semibold text-brand-orange hover:underline sm:block">View all jobs &rarr;</a>
@@ -276,6 +284,9 @@ const faqSchema = faqJsonLd(faqs.map((f) => ({ question: f.q, answer: `${f.a} ${
           Featured jobs will appear here as soon as the first listings are approved.
         </div>
       )}
+      <p class="mt-5 text-center text-sm text-slate-500">
+        Want your job here? <a href="/post-a-job/" class="font-semibold text-brand-orange hover:underline">Post your job now &rarr;</a>
+      </p>
     </div>
   </section>
 
