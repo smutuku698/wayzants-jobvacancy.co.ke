@@ -165,7 +165,8 @@ export const POST: APIRoute = async ({ request }) => {
   }).catch((): { ok: false; message: string } => ({ ok: false, message: 'network_error' }));
 
   if (!charge.ok) {
-    return redirectTo('/post-a-job/?error=payment_failed');
+    const reason = encodeURIComponent(charge.message ?? 'unknown');
+    return redirectTo(`/post-a-job/?error=payment_failed&reason=${reason}`);
   }
 
   try {

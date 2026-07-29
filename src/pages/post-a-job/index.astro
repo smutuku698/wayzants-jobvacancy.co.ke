@@ -10,6 +10,7 @@ const [categories, locations] = await Promise.all([
 ]);
 
 const error = Astro.url.searchParams.get('error');
+const reason = Astro.url.searchParams.get('reason');
 const ERROR_MESSAGES: Record<string, string> = {
   missing_fields: 'Please fill in all required fields and try again.',
   invalid_logo: 'Your logo must be a genuine JPG, PNG or WEBP image under 2MB.',
@@ -42,6 +43,9 @@ const description =
     {error && (
       <div class="mt-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
         {ERROR_MESSAGES[error] ?? ERROR_MESSAGES.server_error}
+        {error === 'payment_failed' && reason && (
+          <span class="mt-1 block text-xs text-red-500">Details: {reason}</span>
+        )}
       </div>
     )}
 
