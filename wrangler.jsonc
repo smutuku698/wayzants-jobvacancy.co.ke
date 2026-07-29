@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "jobvacancy-co-ke",
+  "name": "wayzants-jobvacancy-co-ke",
   "compatibility_date": "2025-11-01",
   "compatibility_flags": [],
   "r2_buckets": [
