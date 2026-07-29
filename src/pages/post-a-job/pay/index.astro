@@ -32,12 +32,31 @@ const reference = Astro.url.searchParams.get('ref') ?? '';
       </div>
       <h1 class="mt-6 text-2xl font-extrabold text-brand-dark sm:text-3xl">Payment confirmed!</h1>
       <p class="mt-3 text-slate-600">
-        Thanks — your job is now in review. Our team checks every submission before it goes live, usually within
-        24 hours.
+        Your job has been posted! It will be reviewed and published immediately or within 2 hours. Remember to
+        check your email (and WhatsApp, if you added one) for CVs and cover letters from applicants.
       </p>
       <div class="mt-8 flex flex-wrap justify-center gap-3">
-        <a href="/jobs/" class="btn-secondary">Browse Jobs</a>
-        <a href="/" class="btn-primary">Back to Home</a>
+        <a href="/post-a-job/" class="btn-primary">Post Another Job</a>
+        <a href="/" class="btn-secondary">Back to Home</a>
+      </div>
+    </div>
+
+    <div id="state-checking" class="hidden">
+      <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-brand-orange/10 text-brand-orange">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M12 8v4l2.5 2.5M21 12a9 9 0 1 1-9-9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      </div>
+      <h1 class="mt-6 text-2xl font-extrabold text-brand-dark sm:text-3xl">Still confirming your payment</h1>
+      <p class="mt-3 text-slate-600">
+        This is taking longer than usual. If you already completed the M-Pesa prompt on your phone, don't worry —
+        your payment is still being confirmed and your job will go live automatically once it is. You can safely
+        close this page and check back later, or tap below to check again now.
+      </p>
+      <p class="mt-2 text-sm text-slate-500">
+        Still nothing after 10 minutes? Email us at <a href="mailto:hello@jobvacancy.co.ke" class="font-semibold text-brand-orange">hello@jobvacancy.co.ke</a>.
+      </p>
+      <div class="mt-8 flex flex-wrap justify-center gap-3">
+        <button type="button" id="recheck-btn" class="btn-primary">Check Again</button>
+        <a href="/" class="btn-secondary">Back to Home</a>
       </div>
     </div>
 
@@ -47,8 +66,7 @@ const reference = Astro.url.searchParams.get('ref') ?? '';
       </div>
       <h1 class="mt-6 text-2xl font-extrabold text-brand-dark sm:text-3xl">Payment didn't go through</h1>
       <p class="mt-3 text-slate-600">
-        The M-Pesa payment wasn't completed in time or was cancelled. No job has been published — please try
-        again.
+        The M-Pesa payment wasn't completed or was declined. No job has been published — please try again.
       </p>
       <div class="mt-8">
         <a href="/post-a-job/" class="btn-primary">Start Over</a>
@@ -58,46 +76,61 @@ const reference = Astro.url.searchParams.get('ref') ?? '';
 
   <script define:vars={{ reference }}>
     const POLL_INTERVAL_MS = 3000;
-    const MAX_ATTEMPTS = 40; // ~2 minutes
+    const MAX_ATTEMPTS = 40; // ~2 minutes of active polling before offering a manual recheck
 
-    const pendingEl = document.getElementById('state-pending');
-    const paidEl = document.getElementById('state-paid');
-    const failedEl = document.getElementById('state-failed');
+    const states = {
+      pending: document.getElementById('state-pending'),
+      paid: document.getElementById('state-paid'),
+      checking: document.getElementById('state-checking'),
+      failed: document.getElementById('state-failed'),
+    };
 
-    function show(el) {
-      pendingEl.hidden = true;
-      paidEl.hidden = true;
-      failedEl.hidden = true;
-      el.hidden = false;
+    function show(name) {
+      for (const el of Object.values(states)) el.hidden = true;
+      states[name].hidden = false;
     }
 
-    if (!reference) {
-      show(failedEl);
-    } else {
+    async function checkOnce() {
+      const res = await fetch(`/api/payments/status/?ref=${encodeURIComponent(reference)}`);
+      const body = await res.json();
+      return body.status;
+    }
+
+    async function pollLoop() {
       let attempts = 0;
       const poll = async () => {
         attempts += 1;
         try {
-          const res = await fetch(`/api/payments/status/?ref=${encodeURIComponent(reference)}`);
-          const body = await res.json();
-          if (body.status === 'paid') {
-            show(paidEl);
-            return;
-          }
-          if (body.status === 'failed') {
-            show(failedEl);
-            return;
-          }
+          const status = await checkOnce();
+          if (status === 'paid') return show('paid');
+          if (status === 'failed') return show('failed');
         } catch {
           // Transient network hiccup — keep polling until MAX_ATTEMPTS.
         }
-        if (attempts >= MAX_ATTEMPTS) {
-          show(failedEl);
-          return;
-        }
+        if (attempts >= MAX_ATTEMPTS) return show('checking');
         setTimeout(poll, POLL_INTERVAL_MS);
       };
       poll();
+    }
+
+    if (!reference) {
+      show('failed');
+    } else {
+      pollLoop();
+      document.getElementById('recheck-btn')?.addEventListener('click', async (e) => {
+        const btn = e.currentTarget;
+        btn.disabled = true;
+        btn.textContent = 'Checking…';
+        try {
+          const status = await checkOnce();
+          if (status === 'paid') return show('paid');
+          if (status === 'failed') return show('failed');
+        } catch {
+          // ignore, re-enable button below
+        }
+        btn.disabled = false;
+        btn.textContent = 'Check Again';
+      });
     }
   </script>
 </Layout>

@@ -3,7 +3,7 @@ import Layout from '../../layouts/Layout.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import JobCard from '../../components/JobCard.astro';
 import { getJobBySlug, getRelatedJobs } from '../../lib/queries';
-import { formatSalary, formatDate, timeAgo, formatJobDescription } from '../../lib/format';
+import { formatSalary, formatDate, timeAgo, formatJobDescription, locationLabel, categoryLabel } from '../../lib/format';
 import { jobPostingJsonLd, breadcrumbJsonLd, jobTypeLabel, SITE_URL } from '../../lib/seo';
 import { RELATED_CATEGORIES, NAV_CATEGORIES } from '../../lib/taxonomy';
 
@@ -19,11 +19,11 @@ const salary = formatSalary(job);
 
 const breadcrumbItems = [
   { name: 'Home', href: '/' },
-  { name: job.job_categories?.name ?? 'Jobs', href: `/category/${job.job_categories?.slug}/` },
+  { name: categoryLabel(job), href: `/category/${job.job_categories?.slug}/` },
   { name: job.title },
 ];
 
-const title = `${job.title} at ${job.company_name} — ${job.is_remote ? 'Remote' : job.locations?.name} | JobVacancy.co.ke`;
+const title = `${job.title} at ${job.company_name} — ${locationLabel(job)} | JobVacancy.co.ke`;
 const description =
   job.ai_enhancement?.metaDescription ||
   `${job.title} at ${job.company_name}. ${job.description.slice(0, 130).replace(/\s+/g, ' ')}...`;
@@ -36,6 +36,9 @@ const jsonLd = [
 ];
 
 const applyHref = job.application_method === 'email' ? `mailto:${job.application_value}?subject=${encodeURIComponent(`Application: ${job.title}`)}` : job.application_value;
+const whatsappHref = job.whatsapp_number
+  ? `https://wa.me/${job.whatsapp_number.replace(/[^\d]/g, '')}?text=${encodeURIComponent(`Hi, I'd like to apply for ${job.title} at ${job.company_name}.`)}`
+  : null;
 
 // Vertical interlinking (site-wide, for SEO) — only for categories with a
 // genuine relation defined in taxonomy.ts; an irrelevant "related category"
@@ -70,7 +73,7 @@ const relatedCategoryLinks = relatedCategorySlugs
 
       <div class="mt-5 flex flex-wrap gap-2 text-xs">
         <span class="badge bg-brand-dark/5 text-brand-dark">{jobTypeLabel(job.job_type)}</span>
-        <span class="badge bg-brand-dark/5 text-brand-dark">{job.is_remote ? 'Remote / Online' : job.locations?.name}</span>
+        <span class="badge bg-brand-dark/5 text-brand-dark">{locationLabel(job)}</span>
         {salary && <span class="badge bg-brand-green/10 text-brand-green-dark">{salary}</span>}
         <span class="badge bg-slate-100 text-slate-500">Posted {timeAgo(job.created_at)}</span>
       </div>
@@ -79,9 +82,19 @@ const relatedCategoryLinks = relatedCategorySlugs
         <p class="text-sm text-slate-500">
           {job.deadline ? <>Application deadline: <b class="text-brand-dark">{formatDate(job.deadline)}</b></> : 'Apply as soon as possible'}
         </p>
-        <a href={applyHref} rel="nofollow noopener" target={job.application_method === 'url' ? '_blank' : undefined} class="btn-primary">
-          Apply Now
-        </a>
+        <div class="flex flex-wrap items-center gap-3">
+          <a href={applyHref} rel="nofollow noopener" target={job.application_method === 'url' ? '_blank' : undefined} class="btn-primary">
+            Apply Now
+          </a>
+          {whatsappHref && (
+            <a href={whatsappHref} rel="nofollow noopener" target="_blank" class="btn-secondary !py-2 text-sm">
+              Apply via WhatsApp
+            </a>
+          )}
+          <a href="/cv-and-resume-services/" class="btn-secondary !py-2 text-sm">
+            Get a Job-Winning CV
+          </a>
+        </div>
       </div>
 
       <div class="mt-6 max-w-none text-slate-700">
@@ -179,8 +192,13 @@ const relatedCategoryLinks = relatedCategorySlugs
           <a href={applyHref} rel="nofollow noopener" target={job.application_method === 'url' ? '_blank' : undefined} class="btn-primary">
             Apply Now
           </a>
+          {whatsappHref && (
+            <a href={whatsappHref} rel="nofollow noopener" target="_blank" class="btn-secondary !py-2 text-sm">
+              Apply via WhatsApp
+            </a>
+          )}
           <a href="/cv-and-resume-services/" class="btn-secondary !py-2 text-sm">
-            Get Your CV Done
+            Get a Job-Winning CV
           </a>
         </div>
         {job.is_international && (
@@ -202,7 +220,7 @@ const relatedCategoryLinks = relatedCategorySlugs
 
     {relatedJobs.length > 0 && (
       <div class="mt-10">
-        <h2 class="text-xl font-bold text-brand-dark">More {job.job_categories?.name}</h2>
+        <h2 class="text-xl font-bold text-brand-dark">More {categoryLabel(job)}</h2>
         <div class="mt-4 grid grid-cols-1 gap-4">
           {relatedJobs.map((j) => <JobCard job={j} />)}
         </div>

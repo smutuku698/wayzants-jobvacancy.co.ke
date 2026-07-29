@@ -320,12 +320,69 @@ export interface TemplateFallbackResult {
   marketContext: string;
 }
 
+// The two historical datasets (enhanced-jobs.json, enhanced-ngo-jobs.json) store
+// ~139 distinct free-text `category` values — a handful of clean function names
+// (Programming, Design, Marketing...) mixed with noisy single-word scrape tags
+// (python, react, manager, saas...). Matched most-specific-first so compound
+// terms (e.g. "front-end") aren't swallowed by a shorter unrelated substring.
+const CATEGORY_KEYWORDS: [string, string][] = [
+  ['front-end', 'Programming'], ['front end', 'Programming'], ['frontend', 'Programming'],
+  ['back-end', 'Programming'], ['back end', 'Programming'], ['backend', 'Programming'],
+  ['full-stack', 'Programming'], ['full stack', 'Programming'], ['fullstack', 'Programming'],
+  ['devops', 'Programming'], ['sysadmin', 'Programming'], ['software', 'Programming'],
+  ['programming', 'Programming'], ['developer', 'Programming'], ['engineer', 'Programming'],
+  ['architect', 'Programming'], ['python', 'Programming'], ['javascript', 'Programming'],
+  ['golang', 'Programming'], ['php', 'Programming'], ['react', 'Programming'], ['c#', 'Programming'],
+  ['ios', 'Programming'], ['mobile', 'Programming'], ['embedded', 'Programming'], ['unity', 'Programming'],
+  ['elasticsearch', 'Programming'], ['grafana', 'Programming'], ['ansible', 'Programming'],
+  ['redis', 'Programming'], ['cloud', 'Programming'], ['aws', 'Programming'], ['security', 'Programming'],
+  ['infosec', 'Programming'], ['ai / ml', 'Programming'], ['ai/ml', 'Programming'], ['web3', 'Programming'],
+  ['crypto', 'Programming'], ['defi', 'Programming'], ['nft', 'Programming'], ['code', 'Programming'],
+  ['qa', 'Programming'], ['test', 'Programming'], ['system', 'Programming'], ['technical', 'Programming'],
+  ['osx', 'Programming'], ['microsoft', 'Programming'], ['jira', 'Programming'],
+  ['designer', 'Design'], ['design', 'Design'], ['3d', 'Design'], ['vfx', 'Design'], ['ui', 'Design'], ['ux', 'Design'],
+  ['game', 'Design'], ['video', 'Design'],
+  ['writer', 'Writing'], ['writing', 'Writing'], ['copywriter', 'Writing'],
+  ['marketing', 'Marketing'], ['growth', 'Marketing'], ['content', 'Marketing'], ['strategist', 'Marketing'],
+  ['saas', 'Marketing'],
+  ['sales', 'Sales'], ['salesforce', 'Sales'],
+  ['customer support', 'Customer Service'], ['customer service', 'Customer Service'],
+  ['support', 'Customer Service'], ['happiness', 'Customer Service'],
+  ['data analysis', 'Data'], ['data', 'Data'], ['analyst', 'Data'], ['excel', 'Data'],
+  ['finance / legal', 'Finance'], ['finance   legal', 'Finance'], ['finance', 'Finance'],
+  ['financial', 'Finance'], ['accountant', 'Finance'], ['accounting', 'Finance'], ['bank', 'Finance'],
+  ['payroll', 'Finance'], ['cfo', 'Finance'], ['legal', 'Finance'],
+  ['human resources', 'HR'], ['hr', 'HR'], ['recruiter', 'HR'],
+  ['product', 'Product'],
+  ['project management', 'Management'], ['management', 'Management'], ['manager', 'Management'],
+  ['supervisor', 'Management'], ['lead', 'Management'], ['leader', 'Management'], ['director', 'Management'],
+  ['ceo', 'Management'], ['cto', 'Management'], ['founder', 'Management'], ['exec', 'Management'],
+  ['executive', 'Management'], ['consultant', 'Management'], ['consulting', 'Management'],
+  ['coordinator', 'Management'], ['operations', 'Management'], ['operational', 'Management'],
+  ['medical', 'Healthcare'], ['biotech', 'Healthcare'],
+  ['teacher', 'Education'], ['teaching', 'Education'], ['tutor', 'Education'], ['instructor', 'Education'],
+  ['trainer', 'Education'], ['training', 'Education'], ['education', 'Education'], ['students', 'Education'],
+  ['adult', 'Education'],
+];
+
+/** Maps a legacy dataset's messy free-text `category` value onto one of this file's template keys — exact match first, then a keyword scan, falling back to `Other`. */
+export function normalizeLegacyCategory(raw: string | undefined): string {
+  const value = (raw ?? '').trim();
+  if (value in CATEGORY_TEMPLATES) return value;
+  const lower = value.toLowerCase();
+  for (const [keyword, key] of CATEGORY_KEYWORDS) {
+    if (lower.includes(keyword)) return key;
+  }
+  return 'Other';
+}
+
 /** Category-specific template fallback for remote/NGO jobs, keyed by the source's own function category (Programming, Finance, Marketing, etc). */
 export function generateTemplateFallback(job: { title: string; company: string; description: string; sourceCategory: string }): TemplateFallbackResult {
-  const template = CATEGORY_TEMPLATES[job.sourceCategory] ?? CATEGORY_TEMPLATES.Other;
-  const extra = EXTRA_CONTEXT[job.sourceCategory] ?? EXTRA_CONTEXT.Other;
+  const sourceCategory = normalizeLegacyCategory(job.sourceCategory);
+  const template = CATEGORY_TEMPLATES[sourceCategory] ?? CATEGORY_TEMPLATES.Other;
+  const extra = EXTRA_CONTEXT[sourceCategory] ?? EXTRA_CONTEXT.Other;
   const careerLevel = detectCareerLevel(job.title, job.description);
-  const ranges = SALARY_RANGES[job.sourceCategory] ?? SALARY_RANGES.Other;
+  const ranges = SALARY_RANGES[sourceCategory] ?? SALARY_RANGES.Other;
   const range = ranges[careerLevel] ?? ranges['Mid Level'];
   const kenyaSalaryEstimate = `KES ${range.min.toLocaleString()} - ${range.max.toLocaleString()}/month`;
 
@@ -335,7 +392,7 @@ export function generateTemplateFallback(job: { title: string; company: string; 
     kenyaSalaryEstimate,
     metaDescription: `${job.title} at ${job.company}. Remote work from Kenya. ${job.sourceCategory} opportunity. ${kenyaSalaryEstimate}. Apply now!`.slice(0, 155),
     applicationTips: template.applicationTips,
-    kenyaContext: KENYA_CONTEXT[job.sourceCategory] ?? KENYA_CONTEXT.Other,
+    kenyaContext: KENYA_CONTEXT[sourceCategory] ?? KENYA_CONTEXT.Other,
     jobSummary: `${job.company} is looking for a ${job.title.toLowerCase().includes(job.sourceCategory.toLowerCase()) ? job.title : `${job.title} (${job.sourceCategory})`}. Review the full listing below for the exact requirements and how to apply.`,
     careerGrowth: extra.careerGrowth,
     workEnvironment: extra.workEnvironment,

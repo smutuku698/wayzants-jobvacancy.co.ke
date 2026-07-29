@@ -1,6 +1,6 @@
 ---
 import type { JobWithRelations } from '../lib/types';
-import { formatSalary, locationLabel, timeAgo } from '../lib/format';
+import { formatSalary, locationLabel, categoryLabel, timeAgo } from '../lib/format';
 import { jobTypeLabel } from '../lib/seo';
 
 interface Props {
@@ -49,7 +49,7 @@ const salary = formatSalary(job);
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="shrink-0"><path d="m5 13 4 4L19 7" stroke="var(--color-brand-green-dark)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
       Verified listing
     </span>
-    <span class="truncate text-slate-400">{job.job_categories?.name}</span>
+    <span class="truncate text-slate-400">{categoryLabel(job)}</span>
     <span class="ml-auto shrink-0">{timeAgo(job.created_at)}</span>
   </div>
 </a>

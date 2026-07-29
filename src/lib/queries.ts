@@ -239,6 +239,8 @@ export interface NewJobSubmission {
   description: string;
   category_id: string;
   location_id: string;
+  custom_category_label?: string | null;
+  custom_location_label?: string | null;
   job_type: string;
   is_remote: boolean;
   is_international: boolean;
@@ -247,6 +249,7 @@ export interface NewJobSubmission {
   salary_currency?: string;
   application_method: 'email' | 'url';
   application_value: string;
+  whatsapp_number?: string | null;
   deadline?: string | null;
   contact_name?: string | null;
   contact_email: string;
@@ -311,14 +314,16 @@ const LISTING_DAYS = 60;
  * this point, which the public RLS read policy (status='approved' only)
  * would otherwise hide entirely.
  */
-export async function getJobPaymentStatusByReference(reference: string): Promise<string | null> {
+export async function getJobPaymentByReference(
+  reference: string
+): Promise<{ payment_status: string; pricing_tier: '5day' | '14day' } | null> {
   const { data, error } = await getSupabaseAdmin()
     .from('jobs')
-    .select('payment_status')
+    .select('payment_status, pricing_tier')
     .eq('payment_reference', reference)
     .maybeSingle();
   if (error) throw error;
-  return data?.payment_status ?? null;
+  return data;
 }
 
 /**

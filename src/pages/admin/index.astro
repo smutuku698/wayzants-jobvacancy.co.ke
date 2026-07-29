@@ -23,16 +23,18 @@ const pendingJobs = await getPendingJobs().catch(() => []);
             <div class="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h2 class="text-lg font-bold text-brand-dark">{job.title}</h2>
-                <p class="text-sm text-slate-600">{job.company_name} &middot; {job.locations?.name} &middot; {jobTypeLabel(job.job_type)}</p>
+                <p class="text-sm text-slate-600">
+                  {job.company_name} &middot; {job.locations?.name}{job.custom_location_label ? ` (${job.custom_location_label})` : ''} &middot; {jobTypeLabel(job.job_type)}
+                </p>
                 <p class="mt-1 text-xs text-slate-400">
-                  Category: {job.job_categories?.name} &middot; Submitted {timeAgo(job.created_at)} &middot; Contact: {job.contact_email}
+                  Category: {job.job_categories?.name}{job.custom_category_label ? ` (${job.custom_category_label})` : ''} &middot; Submitted {timeAgo(job.created_at)} &middot; Contact: {job.contact_email}
                 </p>
               </div>
               <div class="flex shrink-0 gap-2">
-                <form method="post" action={`/api/admin/jobs/${job.id}/approve`}>
+                <form method="post" action={`/api/admin/jobs/${job.id}/approve/`}>
                   <button type="submit" class="btn-primary !py-2 !px-4 text-sm">Approve</button>
                 </form>
-                <form method="post" action={`/api/admin/jobs/${job.id}/reject`}>
+                <form method="post" action={`/api/admin/jobs/${job.id}/reject/`}>
                   <button type="submit" class="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-100">Reject</button>
                 </form>
               </div>

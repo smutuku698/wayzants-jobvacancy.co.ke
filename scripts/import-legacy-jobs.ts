@@ -370,7 +370,7 @@ async function main() {
   let inserted = 0;
   let failed = 0;
   for (const row of limited) {
-    const slug = await uniqueSlug(supabase, row.title, row.company_name);
+    const slug = await uniqueSlug(supabase, row.title, row.company_name, row.source_url ?? undefined);
     const { error } = await supabase.from('jobs').upsert({ ...row, slug }, { onConflict: 'source_url' });
     if (error) {
       failed += 1;

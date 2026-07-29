@@ -17,6 +17,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   invalid_fields:
     'Please check your email address and application link/email, and make sure no field is unusually long, then try again.',
   invalid_phone: 'Please enter a valid Safaricom/Airtel M-Pesa number (e.g. 07XX XXX XXX).',
+  invalid_whatsapp: 'Please enter a valid Kenyan WhatsApp number (e.g. 07XX XXX XXX), or leave it blank.',
   payment_failed: "We couldn't start the M-Pesa payment with that number. Please check it and try again.",
   server_error: 'Something went wrong on our end. Please try again in a moment.',
 };
@@ -55,20 +56,24 @@ const description =
         <div>
           <label for="title" class="mb-1.5 block text-sm font-semibold text-brand-dark">Job Title *</label>
           <input id="title" name="title" type="text" required maxlength="120" placeholder="e.g. Accountant, Sales Executive, Programme Officer – M&E" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
-          <p class="mt-1 text-xs text-slate-400">Use the actual job title only — no "URGENT!!!", salary figures or contact details here.</p>
+          <p class="mt-1 text-xs text-slate-500">Use the actual job title only — no "URGENT!!!", salary figures or contact details here.</p>
         </div>
         <div>
           <label for="company_name" class="mb-1.5 block text-sm font-semibold text-brand-dark">Company / Organisation Name *</label>
           <input id="company_name" name="company_name" type="text" required maxlength="150" placeholder="e.g. Kenya Red Cross Society" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
-          <p class="mt-1 text-xs text-slate-400">The real, verifiable name of the hiring company — not a recruiter's personal name.</p>
+          <p class="mt-1 text-xs text-slate-500">The real, verifiable name of the hiring company — not a recruiter's personal name.</p>
         </div>
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label for="category_id" class="mb-1.5 block text-sm font-semibold text-brand-dark">Category *</label>
             <select id="category_id" name="category_id" required class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange">
               <option value="">Select a category</option>
-              {categories.map((c) => <option value={c.id}>{c.name}</option>)}
+              {categories.map((c) => <option value={c.id} data-slug={c.slug}>{c.name}</option>)}
             </select>
+            <div id="custom_category_wrap" class="mt-2 hidden">
+              <input id="custom_category_label" name="custom_category_label" type="text" maxlength="100" placeholder="e.g. Housegirl, Watchman, Personal Driver" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+              <p class="mt-1 text-xs text-slate-500">Don't see your category? Describe it here — this is what job seekers will see instead of "Other".</p>
+            </div>
           </div>
           <div>
             <label for="job_type" class="mb-1.5 block text-sm font-semibold text-brand-dark">Job Type *</label>
@@ -82,8 +87,12 @@ const description =
             <label for="location_id" class="mb-1.5 block text-sm font-semibold text-brand-dark">Location *</label>
             <select id="location_id" name="location_id" required class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange">
               <option value="">Select a location</option>
-              {locations.map((l) => <option value={l.id}>{l.name}</option>)}
+              {locations.map((l) => <option value={l.id} data-slug={l.slug}>{l.name}</option>)}
             </select>
+            <div id="custom_location_wrap" class="mt-2 hidden">
+              <input id="custom_location_label" name="custom_location_label" type="text" maxlength="100" placeholder="e.g. Kericho, Kitale, Malindi" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+              <p class="mt-1 text-xs text-slate-500">Don't see your town? Type it here so applicants know exactly where this job is.</p>
+            </div>
           </div>
           <div class="flex flex-col justify-end gap-2 pb-1">
             <label class="flex items-center gap-2 text-sm text-brand-dark">
@@ -106,7 +115,7 @@ const description =
             rows="10"
             placeholder={`e.g.\n\nAbout the role:\nWe are looking for a Sales Executive to grow our client base in Nairobi.\n\nKey responsibilities:\n- Identify and approach new business leads\n- Meet monthly sales targets\n- Prepare weekly sales reports\n\nRequirements:\n- Diploma or degree in Sales/Marketing or related field\n- 2+ years' experience in a similar role\n- Excellent communication skills\n\nHow to apply:\nSend your CV and cover letter to the email/link below by [deadline].`}
             class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange"></textarea>
-          <p class="mt-1 text-xs text-slate-400">
+          <p class="mt-1 text-xs text-slate-500">
             A few honest lines about the role and how to apply is enough — you don't need a big company or a long
             write-up. More detail (responsibilities, requirements, qualifications) does help you get more
             applicants though. Do not mention application fees, forex/crypto "training", or requests for
@@ -133,7 +142,7 @@ const description =
             <input id="deadline" name="deadline" type="date" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
           </div>
         </div>
-        <p class="-mt-2 text-xs text-slate-400">
+        <p class="-mt-2 text-xs text-slate-500">
           Salary is optional but listings with a salary range get significantly more applicants. Use whole numbers
           only (e.g. 45000, not "45,000" or "45k"). Pick USD/GBP/EUR for roles paid in foreign currency (e.g.
           international remote or teaching-abroad jobs).
@@ -141,32 +150,48 @@ const description =
         <div>
           <label for="logo" class="mb-1.5 block text-sm font-semibold text-brand-dark">Company Logo</label>
           <input id="logo" name="logo" type="file" accept="image/png,image/jpeg,image/webp" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none file:mr-3 file:rounded-md file:border-0 file:bg-cream file:px-3 file:py-1.5 file:text-sm focus:border-brand-orange" />
-          <p class="mt-1 text-xs text-slate-400">JPG, PNG or WEBP, up to 2MB. Optional.</p>
+          <p class="mt-1 text-xs text-slate-500">JPG, PNG or WEBP, up to 2MB. Optional.</p>
         </div>
       </fieldset>
 
       <fieldset class="space-y-4 border-t border-slate-100 pt-6">
         <legend class="text-sm font-bold uppercase tracking-wide text-slate-500">How to Apply</legend>
-        <div class="flex gap-6 text-sm">
-          <label class="flex items-center gap-2 text-brand-dark">
-            <input type="radio" name="application_method" value="email" checked required class="h-4 w-4 text-brand-orange focus:ring-brand-orange" />
-            Email
+        <p class="text-xs text-slate-500">Pick the one required method below, and optionally add WhatsApp as an extra way for applicants to reach you.</p>
+        <div class="flex flex-col gap-3 sm:flex-row sm:gap-6">
+          <label class="flex items-start gap-2 text-sm text-brand-dark">
+            <input type="radio" name="application_method" value="email" checked required class="mt-0.5 h-4 w-4 text-brand-orange focus:ring-brand-orange" />
+            <span>
+              <span class="font-semibold">Email</span>
+              <span class="block text-xs text-slate-500">Applicants send their CV and cover letter straight to your inbox.</span>
+            </span>
           </label>
-          <label class="flex items-center gap-2 text-brand-dark">
-            <input type="radio" name="application_method" value="url" required class="h-4 w-4 text-brand-orange focus:ring-brand-orange" />
-            Application link
+          <label class="flex items-start gap-2 text-sm text-brand-dark">
+            <input type="radio" name="application_method" value="url" required class="mt-0.5 h-4 w-4 text-brand-orange focus:ring-brand-orange" />
+            <span>
+              <span class="font-semibold">Application link</span>
+              <span class="block text-xs text-slate-500">Applicants are sent to your own careers page or form to apply there.</span>
+            </span>
           </label>
         </div>
         <div>
           <label for="application_value" class="mb-1.5 block text-sm font-semibold text-brand-dark">Application Email or URL *</label>
           <input id="application_value" name="application_value" type="text" required placeholder="e.g. jobs@company.com or https://company.com/careers/apply" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
-          <p class="mt-1 text-xs text-slate-400">A work email at your company's domain or a real application link — not a personal Gmail/WhatsApp number.</p>
+          <p class="mt-1 text-xs text-slate-500">A work email at your company's domain or a real application link — not a personal Gmail/WhatsApp number.</p>
+        </div>
+        <div>
+          <label for="whatsapp_number" class="mb-1.5 block text-sm font-semibold text-brand-dark">WhatsApp Number for Applications (optional)</label>
+          <input id="whatsapp_number" name="whatsapp_number" type="tel" inputmode="tel" placeholder="e.g. 0722 123 456" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+          <p class="mt-1 text-xs text-slate-500">
+            Optional extra channel, in addition to the email/link above — applicants will also be able to send their
+            CV and cover letter directly on WhatsApp to this number. Leave blank if you'd rather only use the
+            method above.
+          </p>
         </div>
       </fieldset>
 
       <fieldset class="space-y-4 border-t border-slate-100 pt-6">
         <legend class="text-sm font-bold uppercase tracking-wide text-slate-500">Your Contact Details</legend>
-        <p class="text-xs text-slate-400">Not published — used only if we need to verify this listing.</p>
+        <p class="text-xs text-slate-500">Not published — used only if we need to verify this listing.</p>
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label for="contact_name" class="mb-1.5 block text-sm font-semibold text-brand-dark">Your Name</label>
@@ -252,6 +277,22 @@ const description =
     const modalPhoneError = document.getElementById('modal_phone_error') as HTMLElement;
 
     const KE_PHONE_RE = /^(?:\+?254|0)([17]\d{8})$/;
+
+    function setupOtherToggle(selectId: string, wrapId: string, inputId: string) {
+      const select = document.getElementById(selectId) as unknown as HTMLSelectElement;
+      const wrap = document.getElementById(wrapId) as HTMLElement;
+      const input = document.getElementById(inputId) as HTMLInputElement;
+      const sync = () => {
+        const isOther = select.selectedOptions[0]?.dataset.slug === 'other' || select.selectedOptions[0]?.dataset.slug === 'other-kenya-location';
+        wrap.classList.toggle('hidden', !isOther);
+        input.required = isOther;
+        if (!isOther) input.value = '';
+      };
+      select.addEventListener('change', sync);
+      sync();
+    }
+    setupOtherToggle('category_id', 'custom_category_wrap', 'custom_category_label');
+    setupOtherToggle('location_id', 'custom_location_wrap', 'custom_location_label');
 
     function openModal() {
       modal.hidden = false;

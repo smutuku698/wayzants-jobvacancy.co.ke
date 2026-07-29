@@ -1,4 +1,4 @@
-import type { Job, Location } from './types';
+import type { Job, JobCategory, Location } from './types';
 
 export function formatSalary(job: Pick<Job, 'salary_min' | 'salary_max' | 'salary_currency'>): string | null {
   const { salary_min, salary_max, salary_currency } = job;
@@ -46,10 +46,17 @@ export function formatDate(dateString: string): string {
   });
 }
 
-export function locationLabel(job: Pick<Job, 'is_remote' | 'is_international'> & { locations?: Pick<Location, 'name'> | null }): string {
+export function locationLabel(
+  job: Pick<Job, 'is_remote' | 'is_international' | 'custom_location_label'> & { locations?: Pick<Location, 'name'> | null }
+): string {
   if (job.is_international) return 'International — 100% Remote';
   if (job.is_remote) return 'Remote / Online';
-  return job.locations?.name ?? 'Kenya';
+  return job.custom_location_label || job.locations?.name || 'Kenya';
+}
+
+/** Poster's free-text override when they picked the generic "Other" category, shown instead of the word "Other". */
+export function categoryLabel(job: Pick<Job, 'custom_category_label'> & { job_categories?: Pick<JobCategory, 'name'> | null }): string {
+  return job.custom_category_label || job.job_categories?.name || 'Other';
 }
 
 /**

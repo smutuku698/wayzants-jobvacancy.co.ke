@@ -47,6 +47,12 @@ export function remapLegacyEnhancement(job: LegacyRemoteJob): AiEnhancement | nu
   // don't visibly disagree on the page.
   const cleanedCompany = cleanCompanyName(job.company);
   const jobSummary = (e.jobSummary ?? '').replace(job.company, cleanedCompany);
+  // The old site's remote/NGO pipeline never produced companyInsights/careerGrowth/
+  // workEnvironment/benefits/marketContext at all (unlike local/cruise/teaching-abroad,
+  // which shipped with their own rich prose) — mine the same per-function-category
+  // template fallback the live scraper uses for these, keyed off the job's own
+  // (messy, free-text) `category` field, so these rows aren't left thin.
+  const extra = generateTemplateFallback({ title: job.title, company: cleanedCompany, description: job.description ?? '', sourceCategory: job.category });
   return {
     skills,
     careerLevel,
@@ -55,6 +61,10 @@ export function remapLegacyEnhancement(job: LegacyRemoteJob): AiEnhancement | nu
     applicationTips: (e.applicationTips ?? []).map((t) => repairMojibake(decodeHtmlEntities(t))),
     kenyaContext: repairMojibake(decodeHtmlEntities(job.kenyaContext ?? '')),
     jobSummary: repairMojibake(decodeHtmlEntities(jobSummary)) || undefined,
+    careerGrowth: extra.careerGrowth,
+    workEnvironment: extra.workEnvironment,
+    benefits: extra.benefits,
+    marketContext: extra.marketContext,
     enhancementSource: 'legacy',
     enhancedAt: job.enhancementMetadata?.timestamp ?? job.pubDate,
   };
@@ -361,6 +371,7 @@ function templateEnhancement(job: EnhanceInput): AiEnhancement {
     jobSummary: `${job.company} is hiring for a ${job.title} position. Review the full listing below for the exact requirements and how to apply.`,
     careerGrowth: 'Roles like this typically offer room to grow into more senior positions with experience, added responsibility, and a track record of strong performance.',
     workEnvironment: 'Day-to-day expectations vary by employer — review the listing for specifics on schedule, location and team structure, and don’t hesitate to ask during the interview.',
+    benefits: 'Confirm the exact benefits package directly with the employer, since it isn’t always specified in the listing.',
     marketContext: 'Demand for this kind of role fluctuates with the wider economy — a well-tailored application that speaks directly to the listed requirements gives you the best chance.',
     enhancementSource: 'template',
     enhancedAt: new Date().toISOString(),

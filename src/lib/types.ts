@@ -52,6 +52,9 @@ export interface Job {
   description: string;
   category_id: string;
   location_id: string;
+  /** Free-text override shown instead of the generic "Other" category/location name when the poster picked "Other". */
+  custom_category_label: string | null;
+  custom_location_label: string | null;
   job_type: JobType;
   is_remote: boolean;
   is_international: boolean;
@@ -60,6 +63,8 @@ export interface Job {
   salary_currency: string;
   application_method: ApplicationMethod;
   application_value: string;
+  /** Optional extra channel — applicants can also send a CV/cover letter here alongside the primary method. */
+  whatsapp_number: string | null;
   deadline: string | null;
   status: JobStatus;
   contact_name: string | null;

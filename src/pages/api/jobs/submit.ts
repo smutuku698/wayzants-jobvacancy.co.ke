@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { getEnv } from '../../../lib/env';
-import { submitJob } from '../../../lib/queries';
+import { submitJob, getCategoryBySlug, getLocationBySlug } from '../../../lib/queries';
 import { slugify, normalizeKenyanPhone } from '../../../lib/format';
 import { initiateMpesaCharge } from '../../../lib/payments';
 
@@ -56,6 +56,8 @@ export const POST: APIRoute = async ({ request }) => {
   const company_name = get('company_name');
   const category_id = get('category_id');
   const location_id = get('location_id');
+  const custom_category_label_raw = get('custom_category_label');
+  const custom_location_label_raw = get('custom_location_label');
   const job_type = get('job_type');
   const description = get('description');
   const application_method = get('application_method') as 'email' | 'url';
@@ -65,6 +67,7 @@ export const POST: APIRoute = async ({ request }) => {
   const deadline = get('deadline') || null;
   const pricing_tier = get('pricing_tier') as '5day' | '14day' | '';
   const mpesa_phone_raw = get('mpesa_phone');
+  const whatsapp_raw = get('whatsapp_number');
 
   if (
     !title ||
@@ -89,6 +92,35 @@ export const POST: APIRoute = async ({ request }) => {
   const mpesa_phone = normalizeKenyanPhone(mpesa_phone_raw);
   if (!mpesa_phone) {
     return redirectTo('/post-a-job/?error=invalid_phone');
+  }
+
+  // Optional — applicants can send a CV/cover letter here alongside the
+  // required application method. Only validated if the poster filled it in.
+  let whatsapp_number: string | null = null;
+  if (whatsapp_raw) {
+    whatsapp_number = normalizeKenyanPhone(whatsapp_raw);
+    if (!whatsapp_number) {
+      return redirectTo('/post-a-job/?error=invalid_whatsapp');
+    }
+  }
+
+  // "Other" category/"Another location in Kenya" require the poster's own
+  // free-text label — everyone else leaves these blank.
+  const [otherCategory, otherLocation] = await Promise.all([
+    getCategoryBySlug('other').catch(() => null),
+    getLocationBySlug('other-kenya-location').catch(() => null),
+  ]);
+
+  let custom_category_label: string | null = null;
+  if (otherCategory && category_id === otherCategory.id) {
+    if (!custom_category_label_raw) return redirectTo('/post-a-job/?error=missing_fields');
+    custom_category_label = custom_category_label_raw.slice(0, 100);
+  }
+
+  let custom_location_label: string | null = null;
+  if (otherLocation && location_id === otherLocation.id) {
+    if (!custom_location_label_raw) return redirectTo('/post-a-job/?error=missing_fields');
+    custom_location_label = custom_location_label_raw.slice(0, 100);
   }
 
   if (
@@ -179,6 +211,8 @@ export const POST: APIRoute = async ({ request }) => {
       description,
       category_id,
       location_id,
+      custom_category_label,
+      custom_location_label,
       job_type,
       is_remote,
       is_international,
@@ -187,6 +221,7 @@ export const POST: APIRoute = async ({ request }) => {
       salary_currency,
       application_method,
       application_value,
+      whatsapp_number,
       deadline,
       contact_name,
       contact_email,

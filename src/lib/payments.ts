@@ -61,6 +61,25 @@ export async function initiateMpesaCharge(params: ChargeParams): Promise<ChargeR
   return { ok: true, status: body.data?.status };
 }
 
+/**
+ * Directly asks Paystack whether a charge succeeded — a fallback safety net
+ * for when the webhook is slow or never arrives (webhooks can be delayed or
+ * dropped; never trust them as the only source of truth). Used by the
+ * payments/status endpoint when our own DB still shows 'pending' after the
+ * client has been polling for a while.
+ */
+export async function verifyCharge(reference: string): Promise<'success' | 'pending' | 'failed' | 'unknown'> {
+  const env = getEnv();
+  const response = await fetch(`${PAYSTACK_BASE}/charge/${encodeURIComponent(reference)}`, {
+    headers: { Authorization: `Bearer ${env.PAYSTACK_SECRET_KEY}` },
+  });
+  const body = (await response.json().catch(() => null)) as PaystackChargeResponse | null;
+  if (!response.ok || !body?.data?.status) return 'unknown';
+  if (body.data.status === 'success') return 'success';
+  if (body.data.status === 'failed') return 'failed';
+  return 'pending';
+}
+
 function toHex(buffer: ArrayBuffer): string {
   return Array.from(new Uint8Array(buffer))
     .map((b) => b.toString(16).padStart(2, '0'))
