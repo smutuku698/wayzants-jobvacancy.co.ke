@@ -1,10 +1,12 @@
 ---
 import Logo from './Logo.astro';
+import WorkWithUsWidget from './WorkWithUsWidget.astro';
 import { NAV_CATEGORIES, NAV_LOCATIONS } from '../lib/taxonomy';
 ---
 
 <footer class="bg-brand-dark pt-14 pb-8 text-white/70">
   <div class="mx-auto max-w-7xl px-4 sm:px-6">
+    <WorkWithUsWidget />
     <div class="grid grid-cols-1 gap-10 border-b border-white/10 pb-10 md:grid-cols-4">
       <div>
         <Logo dark />
@@ -34,6 +36,13 @@ import { NAV_CATEGORIES, NAV_LOCATIONS } from '../lib/taxonomy';
         <ul class="mt-4 space-y-2 text-sm">
           <li><a href="/about/" class="hover:text-white">About Us</a></li>
           <li><a href="/contact/" class="hover:text-white">Contact</a></li>
+          <li><a href="/faq/" class="hover:text-white">FAQ</a></li>
+        </ul>
+        <h4 class="mt-6 text-sm font-bold text-white">Trust &amp; Safety</h4>
+        <ul class="mt-4 space-y-2 text-sm">
+          <li><a href="/editorial-policy/" class="hover:text-white">Editorial Policy</a></li>
+          <li><a href="/disclaimer/" class="hover:text-white">Disclaimer</a></li>
+          <li><a href="/scam-alert/" class="hover:text-white">Scam Alert</a></li>
           <li><a href="/privacy-policy/" class="hover:text-white">Privacy Policy</a></li>
           <li><a href="/terms/" class="hover:text-white">Terms of Use</a></li>
         </ul>
@@ -61,6 +70,10 @@ import { NAV_CATEGORIES, NAV_LOCATIONS } from '../lib/taxonomy';
 
     <div class="flex flex-col items-center justify-between gap-3 pt-6 text-xs text-white/50 sm:flex-row">
       <p>&copy; {new Date().getFullYear()} JobVacancy.co.ke — All Rights Reserved.</p>
+      <div class="flex items-center gap-4">
+        <a href="/sitemap/" class="hover:text-white">Sitemap</a>
+        <a href="/sitemap.xml" class="hover:text-white">XML Sitemap</a>
+      </div>
       <div class="h-1.5 w-24 overflow-hidden rounded-full flex">
         <span class="flex-1 bg-black"></span>
         <span class="flex-1 bg-red-600"></span>

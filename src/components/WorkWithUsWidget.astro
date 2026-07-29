@@ -1,0 +1,203 @@
+---
+import { INQUIRY_TYPE_LABELS } from '../lib/types';
+
+const TYPES = Object.entries(INQUIRY_TYPE_LABELS) as [keyof typeof INQUIRY_TYPE_LABELS, string][];
+---
+
+<!-- Sticker-style trigger card -->
+<div class="relative mb-12 flex justify-center px-2">
+  <button
+    type="button"
+    id="wwu-trigger"
+    class="group inline-flex -rotate-2 items-center gap-3 rounded-2xl bg-brand-orange px-5 py-4 text-left shadow-lg ring-4 ring-white/10 transition hover:rotate-0 hover:scale-[1.03] hover:shadow-xl sm:gap-4 sm:px-7 sm:py-5"
+  >
+    <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/20 text-xl sm:h-12 sm:w-12 sm:text-2xl">🤝</span>
+    <span>
+      <span class="block text-base font-extrabold text-white sm:text-lg">Work With Us</span>
+      <span class="block text-xs text-white/85 sm:text-sm">Partner, sponsor, advertise — or just say hi</span>
+    </span>
+    <span class="ml-1 hidden shrink-0 rounded-full bg-white px-4 py-2 text-sm font-bold text-brand-orange transition group-hover:bg-brand-dark group-hover:text-white sm:inline-block">
+      Get in Touch
+    </span>
+  </button>
+</div>
+
+<!-- Modal -->
+<div id="wwu-overlay" hidden class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4">
+  <div class="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-2xl">
+    <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+      <h2 class="text-lg font-extrabold text-brand-dark">Work With Us</h2>
+      <button type="button" id="wwu-close" aria-label="Close" class="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-brand-dark">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>
+      </button>
+    </div>
+
+    <form id="wwu-form" class="px-6 py-5">
+      <p class="text-sm text-slate-500">Tell us what this is about and we'll get back to you.</p>
+
+      <div class="mt-4">
+        <span class="mb-2 block text-sm font-semibold text-brand-dark">What's this about? *</span>
+        <div class="grid grid-cols-2 gap-2">
+          {TYPES.map(([value, label], i) => (
+            <button
+              type="button"
+              class="wwu-type-btn rounded-lg border px-3 py-2.5 text-left text-sm font-semibold transition border-slate-200 text-slate-600 hover:border-brand-orange/50 aria-pressed:border-brand-orange aria-pressed:bg-brand-orange/10 aria-pressed:text-brand-orange"
+              data-value={value}
+              aria-pressed={i === 0 ? 'true' : 'false'}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <input type="hidden" id="wwu-type" name="type" value={TYPES[0][0]} />
+      </div>
+
+      <div class="mt-4">
+        <label for="wwu-name" class="mb-1.5 block text-sm font-semibold text-brand-dark">Your Name *</label>
+        <input id="wwu-name" name="name" type="text" required maxlength="150" placeholder="e.g. Jane Wanjiru" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+      </div>
+
+      <div class="mt-4">
+        <label for="wwu-email" class="mb-1.5 block text-sm font-semibold text-brand-dark">Email *</label>
+        <input id="wwu-email" name="email" type="email" required maxlength="254" placeholder="e.g. jane@company.com" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+      </div>
+
+      <div class="mt-4">
+        <label for="wwu-company" class="mb-1.5 block text-sm font-semibold text-brand-dark">
+          Company / Organisation <span id="wwu-company-required">*</span>
+          <span id="wwu-company-optional" hidden class="font-normal text-slate-400">(optional)</span>
+        </label>
+        <input id="wwu-company" name="company" type="text" maxlength="200" placeholder="e.g. Acme Ltd" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+      </div>
+
+      <div class="mt-4">
+        <label for="wwu-message" class="mb-1.5 block text-sm font-semibold text-brand-dark">Message *</label>
+        <textarea id="wwu-message" name="message" required maxlength="4000" rows="4" placeholder="Tell us more..." class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange"></textarea>
+      </div>
+
+      <!-- Honeypot — hidden from real users, bots tend to fill every field. -->
+      <input type="text" name="website" tabindex="-1" autocomplete="off" class="absolute left-[-9999px]" aria-hidden="true" />
+
+      <p id="wwu-error" hidden class="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-600"></p>
+
+      <button type="submit" id="wwu-submit" class="btn-primary mt-5 w-full">Send Message</button>
+    </form>
+
+    <div id="wwu-success" hidden class="px-6 py-10 text-center">
+      <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-green/15 text-brand-green-dark">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      </div>
+      <h3 class="mt-4 text-lg font-extrabold text-brand-dark">Message sent!</h3>
+      <p class="mt-2 text-sm text-slate-500">Thanks for reaching out — we'll get back to you at the email you provided.</p>
+      <button type="button" id="wwu-done" class="btn-secondary mt-6">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const trigger = document.getElementById('wwu-trigger') as HTMLButtonElement;
+  const overlay = document.getElementById('wwu-overlay') as HTMLDivElement;
+  const closeBtn = document.getElementById('wwu-close') as HTMLButtonElement;
+  const doneBtn = document.getElementById('wwu-done') as HTMLButtonElement;
+  const form = document.getElementById('wwu-form') as HTMLFormElement;
+  const successPanel = document.getElementById('wwu-success') as HTMLDivElement;
+  const errorEl = document.getElementById('wwu-error') as HTMLParagraphElement;
+  const submitBtn = document.getElementById('wwu-submit') as HTMLButtonElement;
+  const typeInput = document.getElementById('wwu-type') as HTMLInputElement;
+  const typeButtons = document.querySelectorAll<HTMLButtonElement>('.wwu-type-btn');
+  const companyInput = document.getElementById('wwu-company') as HTMLInputElement;
+  const companyRequiredMark = document.getElementById('wwu-company-required') as HTMLSpanElement;
+  const companyOptionalMark = document.getElementById('wwu-company-optional') as HTMLSpanElement;
+
+  function openModal() {
+    overlay.hidden = false;
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    overlay.hidden = true;
+    document.body.style.overflow = '';
+  }
+
+  function resetForm() {
+    form.reset();
+    form.hidden = false;
+    successPanel.hidden = true;
+    errorEl.hidden = true;
+    typeButtons.forEach((btn, i) => btn.setAttribute('aria-pressed', i === 0 ? 'true' : 'false'));
+    typeInput.value = typeButtons[0]?.dataset.value ?? 'comment';
+    syncCompanyRequirement();
+  }
+
+  function syncCompanyRequirement() {
+    const isComment = typeInput.value === 'comment';
+    companyInput.required = !isComment;
+    companyRequiredMark.hidden = isComment;
+    companyOptionalMark.hidden = !isComment;
+  }
+
+  trigger.addEventListener('click', openModal);
+  closeBtn.addEventListener('click', closeModal);
+  doneBtn.addEventListener('click', () => {
+    closeModal();
+    resetForm();
+  });
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !overlay.hidden) closeModal();
+  });
+
+  typeButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      typeButtons.forEach((b) => b.setAttribute('aria-pressed', 'false'));
+      btn.setAttribute('aria-pressed', 'true');
+      typeInput.value = btn.dataset.value ?? 'comment';
+      syncCompanyRequirement();
+    });
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorEl.hidden = true;
+
+    if (companyInput.required && !companyInput.value.trim()) {
+      errorEl.textContent = 'Please add a company/organisation name for this type of inquiry.';
+      errorEl.hidden = false;
+      companyInput.focus();
+      return;
+    }
+
+    const payload = {
+      type: typeInput.value,
+      name: (document.getElementById('wwu-name') as HTMLInputElement).value.trim(),
+      email: (document.getElementById('wwu-email') as HTMLInputElement).value.trim(),
+      company: companyInput.value.trim(),
+      message: (document.getElementById('wwu-message') as HTMLTextAreaElement).value.trim(),
+      website: (form.elements.namedItem('website') as HTMLInputElement).value,
+    };
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending…';
+
+    try {
+      const res = await fetch('/api/inquiries/submit/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const body = (await res.json()) as { ok: boolean; error?: string };
+      if (!res.ok || !body.ok) throw new Error(body.error ?? 'server_error');
+
+      form.hidden = true;
+      successPanel.hidden = false;
+    } catch {
+      errorEl.textContent = "Something went wrong sending your message — please try again, or email us directly.";
+      errorEl.hidden = false;
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Send Message';
+    }
+  });
+</script>

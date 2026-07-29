@@ -60,6 +60,12 @@ export const RELATED_CATEGORIES: Record<string, string[]> = {
   'ngo-jobs': ['government-jobs'],
   'cruise-ship-jobs': ['hospitality-tourism-jobs'],
   'hospitality-tourism-jobs': ['cruise-ship-jobs'],
+  'it-software-jobs': ['online-remote-jobs'],
+  'online-remote-jobs': ['it-software-jobs'],
+  'sales-marketing-jobs': ['customer-service-jobs'],
+  'customer-service-jobs': ['sales-marketing-jobs'],
+  'accounting-finance-jobs': ['admin-secretarial-jobs'],
+  'admin-secretarial-jobs': ['accounting-finance-jobs'],
 };
 
 export const TOP_NAV_CATEGORIES: NavItem[] = [

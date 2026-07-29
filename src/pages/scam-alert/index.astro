@@ -1,0 +1,99 @@
+---
+export const prerender = true;
+import Layout from '../../layouts/Layout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+
+const title = 'Job Scam Alert — How to Spot Fake Job Offers in Kenya | JobVacancy.co.ke';
+const description =
+  'Learn the warning signs of job scams in Kenya — upfront fees, fake recruiters, and too-good-to-be-true offers — and how to report a suspicious listing.';
+
+const warningSigns = [
+  {
+    title: 'Any request for money',
+    detail:
+      'Registration fees, "training materials," uniforms, equipment, or a refundable "processing fee" — legitimate employers never ask candidates to pay to be considered, interviewed, or hired.',
+  },
+  {
+    title: 'Payment via M-Pesa to a personal number',
+    detail:
+      'Scammers often ask for a small M-Pesa payment to a personal phone number rather than a registered business paybill or till number. Treat any such request as a red flag.',
+  },
+  {
+    title: 'Offers with no interview',
+    detail:
+      "If you're told you've been hired without ever speaking to anyone or attending an interview, be suspicious — especially for roles with high pay and low requirements.",
+  },
+  {
+    title: 'Pressure to act immediately',
+    detail:
+      'Scammers create urgency — "offer expires in 1 hour," "pay now to secure your slot" — to stop you from thinking it through or checking the company out.',
+  },
+  {
+    title: 'Unprofessional contact details',
+    detail:
+      'Communication only through WhatsApp or a free email address (e.g. @gmail.com) with no company domain, website, or verifiable office address, for a company claiming to be established.',
+  },
+  {
+    title: 'Vague company information',
+    detail:
+      "If you can't find the company's registration, physical address, or any online presence beyond the job ad itself, verify independently before engaging further.",
+  },
+  {
+    title: 'Requests for sensitive personal or financial information upfront',
+    detail:
+      'Be cautious of requests for your ID number, bank details, or M-Pesa PIN before any formal offer or contract is in place.',
+  },
+];
+---
+
+<Layout title={title} description={description} path="/scam-alert/">
+  <Breadcrumbs items={[{ name: 'Home', href: '/' }, { name: 'Scam Alert' }]} />
+  <div class="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+    <h1 class="text-3xl font-extrabold text-brand-dark">Job Scam Alert: Protect Yourself When Job Hunting</h1>
+    <p class="mt-4 text-slate-600">
+      Job scams target job seekers across Kenya, often by mimicking real companies or offering unrealistic pay for
+      little effort. Every listing on JobVacancy.co.ke is reviewed before publication, but no platform can guarantee
+      every employer's intentions — use this guide alongside your own judgement.
+    </p>
+
+    <div class="mt-8 rounded-xl border-2 border-brand-orange bg-brand-orange/5 p-6">
+      <p class="text-lg font-bold text-brand-dark">The single most important rule</p>
+      <p class="mt-2 text-slate-700">
+        <strong>Never pay money to apply for, interview for, or accept a job.</strong> Not for registration, not for
+        training materials, not for "processing." If you're asked to pay, it's a scam — stop and report it.
+      </p>
+    </div>
+
+    <h2 class="mt-10 text-xl font-bold text-brand-dark">Warning signs to watch for</h2>
+    <div class="mt-4 space-y-4">
+      {warningSigns.map((w) => (
+        <div class="card p-5">
+          <p class="font-semibold text-brand-dark">{w.title}</p>
+          <p class="mt-1 text-sm text-slate-600">{w.detail}</p>
+        </div>
+      ))}
+    </div>
+
+    <h2 class="mt-10 text-xl font-bold text-brand-dark">How to verify an employer before applying</h2>
+    <ul class="mt-4 list-disc space-y-2 pl-5 text-slate-700">
+      <li>Search the company name plus "reviews" or "scam" to see what others say.</li>
+      <li>Check whether the company has a real website, LinkedIn page, or verifiable office address.</li>
+      <li>Call the company's official switchboard number (not just the number in the ad) to confirm the vacancy exists.</li>
+      <li>Be extra cautious with roles offering unusually high pay for minimal experience or qualifications.</li>
+    </ul>
+
+    <h2 class="mt-10 text-xl font-bold text-brand-dark">Report a suspicious listing</h2>
+    <p class="mt-3 text-slate-700">
+      If you spot a listing on JobVacancy.co.ke that shows any of these warning signs, email
+      <a href="mailto:hr@jobvacancy.co.ke" class="font-semibold text-brand-orange">hr@jobvacancy.co.ke</a> with the
+      job title and company name. We investigate every report and remove listings that violate our
+      <a href="/terms/" class="font-semibold text-brand-orange">posting rules</a>.
+    </p>
+
+    <p class="mt-8 text-sm text-slate-500">
+      See also our <a href="/disclaimer/" class="font-semibold text-brand-orange">Disclaimer</a> and
+      <a href="/editorial-policy/" class="font-semibold text-brand-orange">Editorial Policy</a> for how listings are
+      reviewed before publishing.
+    </p>
+  </div>
+</Layout>

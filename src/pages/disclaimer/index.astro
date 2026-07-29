@@ -1,0 +1,61 @@
+---
+export const prerender = true;
+import Layout from '../../layouts/Layout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+
+const title = 'Disclaimer | JobVacancy.co.ke';
+const description = 'Important disclaimer for job seekers and employers using JobVacancy.co.ke.';
+---
+
+<Layout title={title} description={description} path="/disclaimer/" noindex>
+  <Breadcrumbs items={[{ name: 'Home', href: '/' }, { name: 'Disclaimer' }]} />
+  <div class="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+    <h1 class="text-3xl font-extrabold text-brand-dark">Disclaimer</h1>
+    <p class="mt-2 text-sm text-slate-400">Last updated: {new Date().toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+    <div class="prose prose-slate mt-6 max-w-none space-y-4 text-slate-700">
+      <h2 class="text-xl font-bold text-brand-dark">Never pay to apply</h2>
+      <p>
+        JobVacancy.co.ke never charges job seekers to apply, interview, or accept an offer. No legitimate employer
+        does either. If any listing, email, or message asks you for money — for "registration," "training
+        materials," equipment, or any other reason — do not pay, and report it to us immediately at
+        <a href="mailto:hr@jobvacancy.co.ke" class="font-semibold text-brand-orange">hr@jobvacancy.co.ke</a>. See our
+        <a href="/scam-alert/" class="font-semibold text-brand-orange">Scam Alert guide</a> for common warning signs.
+      </p>
+      <h2 class="text-xl font-bold text-brand-dark">Listings are submitted by third parties</h2>
+      <p>
+        Job listings on this site are submitted by employers and recruiters, not written by JobVacancy.co.ke. Our
+        team reviews every submission before publication (see our
+        <a href="/editorial-policy/" class="font-semibold text-brand-orange">Editorial Policy</a>), but we cannot
+        independently verify every detail of every employer or vacancy, and cannot guarantee that any listing is
+        accurate, current, or that a position remains open at the time you apply.
+      </p>
+      <h2 class="text-xl font-bold text-brand-dark">No guarantee of employment</h2>
+      <p>
+        JobVacancy.co.ke is a listings platform, not a recruitment agency or a party to any employment relationship.
+        We do not guarantee that applying to any listing will result in an interview, offer, or job. Hiring decisions
+        are made solely by the employer.
+      </p>
+      <h2 class="text-xl font-bold text-brand-dark">External links</h2>
+      <p>
+        Some listings link to an employer's own website, applicant tracking system, or a third-party job board to
+        complete an application. Once you leave JobVacancy.co.ke, that site's own terms and privacy practices apply,
+        and we are not responsible for their content or conduct.
+      </p>
+      <h2 class="text-xl font-bold text-brand-dark">Salary and content estimates</h2>
+      <p>
+        Some listings include a salary range, skills summary, or contextual notes generated with the help of
+        automated tools to make listings easier to scan. These are estimates intended as a general guide, not a
+        guarantee of pay or role details — always confirm exact terms directly with the employer before accepting
+        a position.
+      </p>
+      <h2 class="text-xl font-bold text-brand-dark">Use at your own discretion</h2>
+      <p>
+        Use of this site and any information on it is at your own risk. Exercise the same judgement you would with
+        any job search: verify employer details independently, meet in professional settings, and trust your
+        instincts if something feels wrong.
+      </p>
+      <h2 class="text-xl font-bold text-brand-dark">Contact</h2>
+      <p>Questions about this disclaimer? Email <a href="mailto:hr@jobvacancy.co.ke" class="font-semibold text-brand-orange">hr@jobvacancy.co.ke</a>.</p>
+    </div>
+  </div>
+</Layout>

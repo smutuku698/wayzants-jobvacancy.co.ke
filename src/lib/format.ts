@@ -38,6 +38,23 @@ export function timeAgo(dateString: string): string {
   return `${value} ${unit}${value !== 1 ? 's' : ''} ago`;
 }
 
+const FREE_LISTING_MAX_AGE_MS = 90 * 24 * 60 * 60 * 1000;
+
+/**
+ * Mirrors the `active_jobs` view's expiry logic (migration 0011) for
+ * rendering purposes on the job's own permalink, which intentionally still
+ * fetches expired jobs (see getJobBySlug) so it can show a "closed" state
+ * instead of 404ing on a bookmarked/indexed URL.
+ */
+export function isJobExpired(job: Pick<Job, 'deadline' | 'created_at' | 'expires_at'>): boolean {
+  if (job.expires_at && new Date(job.expires_at).getTime() <= Date.now()) return true;
+  if (job.deadline) {
+    const today = new Date().toISOString().slice(0, 10);
+    return job.deadline < today;
+  }
+  return Date.now() - new Date(job.created_at).getTime() > FREE_LISTING_MAX_AGE_MS;
+}
+
 export function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString('en-KE', {
     day: 'numeric',

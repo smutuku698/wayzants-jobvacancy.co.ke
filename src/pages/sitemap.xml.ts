@@ -5,7 +5,7 @@ import { SITE_URL } from '../lib/seo';
 
 export const prerender = false;
 
-const STATIC_PATHS = ['/', '/jobs/', '/post-a-job/', '/about/', '/contact/'];
+const STATIC_PATHS = ['/', '/jobs/', '/post-a-job/', '/about/', '/contact/', '/faq/', '/scam-alert/', '/cv-and-resume-services/', '/sitemap/'];
 
 function urlEntry(loc: string, changefreq: string, priority: string, lastmod?: string) {
   return `<url><loc>${loc}</loc><changefreq>${changefreq}</changefreq><priority>${priority}</priority>${
@@ -41,9 +41,8 @@ export const GET: APIRoute = async () => {
     // eslint-disable-next-line no-constant-condition
     while (true) {
       const { data } = await getSupabase()
-        .from('jobs')
+        .from('active_jobs')
         .select('slug, created_at')
-        .eq('status', 'approved')
         .order('created_at', { ascending: false })
         .range(offset, offset + BATCH_SIZE - 1);
       if (!data || data.length === 0) break;

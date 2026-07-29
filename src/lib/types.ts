@@ -90,3 +90,24 @@ export const JOB_TYPE_LABELS: Record<JobType, string> = {
   internship: 'Internship',
   volunteer: 'Volunteer',
 };
+
+export type InquiryType = 'comment' | 'partnership' | 'sponsorship' | 'advertising';
+export type InquiryStatus = 'new' | 'read' | 'archived';
+
+export interface Inquiry {
+  id: string;
+  type: InquiryType;
+  name: string;
+  email: string;
+  company: string | null;
+  message: string;
+  status: InquiryStatus;
+  created_at: string;
+}
+
+export const INQUIRY_TYPE_LABELS: Record<InquiryType, string> = {
+  comment: 'General Comment',
+  partnership: 'Partnership Opportunity',
+  sponsorship: 'Sponsorship',
+  advertising: 'Advertising Opportunity',
+};

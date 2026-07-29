@@ -1,0 +1,30 @@
+<button
+  type="button"
+  id="back-to-top"
+  aria-label="Back to top"
+  class="fixed bottom-6 right-4 z-50 flex h-11 w-11 -translate-y-2 items-center justify-center rounded-full border border-slate-200 bg-white text-brand-orange opacity-0 shadow-lg transition-all duration-300 pointer-events-none hover:bg-brand-orange hover:text-white sm:bottom-8 sm:right-6"
+>
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+    <path d="M12 19V5M12 5l-6 6M12 5l6 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path>
+  </svg>
+</button>
+
+<script>
+  const btn = document.getElementById('back-to-top') as HTMLButtonElement;
+  const SHOW_AFTER_PX = 600;
+
+  function syncVisibility() {
+    const visible = window.scrollY > SHOW_AFTER_PX;
+    btn.classList.toggle('opacity-0', !visible);
+    btn.classList.toggle('pointer-events-none', !visible);
+    btn.classList.toggle('translate-y-0', visible);
+    btn.classList.toggle('-translate-y-2', !visible);
+  }
+
+  window.addEventListener('scroll', syncVisibility, { passive: true });
+  syncVisibility();
+
+  btn.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+</script>

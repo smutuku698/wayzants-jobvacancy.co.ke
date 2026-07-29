@@ -1,0 +1,85 @@
+---
+export const prerender = true;
+import Layout from '../../layouts/Layout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import { faqJsonLd } from '../../lib/seo';
+
+const title = 'FAQ — How JobVacancy.co.ke Works | JobVacancy.co.ke';
+const description =
+  'Answers to common questions about using JobVacancy.co.ke: is it free, how listings are reviewed, how to post a job, and how to stay safe from scams.';
+
+const faqs = [
+  {
+    q: 'Is JobVacancy.co.ke free to use?',
+    a: 'Yes. Browsing jobs, searching, and applying are completely free for job seekers. Posting a job is also free — we do not charge employers to list a genuine vacancy.',
+  },
+  {
+    q: 'Do I need to create an account to apply for a job?',
+    a: 'No account is needed. Each listing shows exactly how to apply — usually an email address or an external application link provided directly by the employer.',
+  },
+  {
+    q: 'Are the jobs on this site verified?',
+    a: 'Every job submitted through our form goes into a review queue and is checked by our team before it is published. We reject listings that are misleading, discriminatory, or that ask applicants for money. See our Editorial Policy for the full process.',
+  },
+  {
+    q: 'Should I ever pay money to apply for a job?',
+    a: 'No — never. Legitimate employers do not charge candidates to apply, interview, or receive an offer. If a listing or anyone contacting you asks for payment, treat it as a scam and report it to us. See our Scam Alert guide for the common patterns to watch for.',
+  },
+  {
+    q: 'How do I post a job?',
+    a: 'Use the "Post a Job" form to submit your vacancy with the role details, application method, and contact information. Our team reviews every submission before it goes live, usually within a few hours.',
+  },
+  {
+    q: 'Does JobVacancy.co.ke handle my job application?',
+    a: 'No. We are a listings platform, not a recruiter. When you apply, your application goes directly to the employer via the email or link they provided — we never see or store your CV.',
+  },
+  {
+    q: 'How often are new jobs added?',
+    a: 'New vacancies are added daily across NGO, government, teaching/TSC, and online/remote categories, alongside international opportunities like cruise ship and teaching-abroad roles.',
+  },
+  {
+    q: 'Can I report a listing that looks like a scam?',
+    a: 'Yes, please do. Email hr@jobvacancy.co.ke with the job title and company name and we will investigate and remove it if it breaches our posting rules.',
+  },
+  {
+    q: 'Who owns JobVacancy.co.ke?',
+    a: 'JobVacancy.co.ke is owned and operated by Hustles Ltd, a company registered in Kenya. See our About page for full company and contact details.',
+  },
+  {
+    q: 'Do you sell my personal data?',
+    a: 'No. We never sell personal data. Read our Privacy Policy for details on what information we collect and how it is used.',
+  },
+];
+
+const faqSchema = faqJsonLd(faqs.map((f) => ({ question: f.q, answer: f.a })));
+---
+
+<Layout title={title} description={description} path="/faq/" jsonLd={faqSchema}>
+  <Breadcrumbs items={[{ name: 'Home', href: '/' }, { name: 'FAQ' }]} />
+  <div class="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+    <h1 class="text-3xl font-extrabold text-brand-dark">Frequently Asked Questions</h1>
+    <p class="mt-3 text-slate-600">
+      Practical answers about how JobVacancy.co.ke works. Looking for jobs in a specific category or city instead?
+      Browse the <a href="/jobs/" class="font-semibold text-brand-orange">full jobs list</a>.
+    </p>
+
+    <div class="mt-8 space-y-3">
+      {faqs.map((f) => (
+        <details class="card group px-5 py-4">
+          <summary class="flex cursor-pointer list-none items-center justify-between gap-4">
+            <h2 class="text-base font-semibold text-brand-dark">{f.q}</h2>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" class="shrink-0 text-brand-orange transition-transform group-open:rotate-180">
+              <path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+          </summary>
+          <p class="mt-3 text-sm text-brand-dark/70">{f.a}</p>
+        </details>
+      ))}
+    </div>
+
+    <p class="mt-8 text-sm text-slate-500">
+      Still have a question? <a href="/contact/" class="font-semibold text-brand-orange">Contact us</a> and we'll get
+      back to you.
+    </p>
+  </div>
+</Layout>

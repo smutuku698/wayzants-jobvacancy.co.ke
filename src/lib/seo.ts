@@ -17,6 +17,7 @@ export function organizationJsonLd() {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: SITE_NAME,
+    legalName: 'Hustles Ltd',
     url: SITE_URL,
     logo: `${SITE_URL}/icon-512.png`,
     description: 'Kenya’s job board for NGO, government, teaching, TSC and online jobs.',
@@ -31,7 +32,7 @@ export function organizationJsonLd() {
       '@type': 'ContactPoint',
       contactType: 'customer service',
       telephone: '+254-736-407-642',
-      email: 'hello@jobvacancy.co.ke',
+      email: 'hr@jobvacancy.co.ke',
       areaServed: 'KE',
       availableLanguage: ['English', 'Swahili'],
     },
@@ -107,7 +108,18 @@ export function jobPostingJsonLd(job: JobWithRelations) {
     directApply: job.application_method === 'url',
   };
 
-  if (job.deadline) json.validThrough = new Date(job.deadline).toISOString();
+  if (job.deadline) {
+    json.validThrough = new Date(job.deadline).toISOString();
+  } else {
+    // No explicit deadline — mirror the active_jobs view's 90-day free-listing
+    // cutoff (migration 0011) so the structured data agrees with the "closed"
+    // state the page itself renders past that point, instead of implicitly
+    // telling Google the listing is still open indefinitely.
+    const ninetyDaysAfterPosted = new Date(new Date(job.created_at).getTime() + 90 * 24 * 60 * 60 * 1000);
+    if (ninetyDaysAfterPosted.getTime() <= Date.now()) {
+      json.validThrough = ninetyDaysAfterPosted.toISOString();
+    }
+  }
 
   if (job.is_remote) {
     json.jobLocationType = 'TELECOMMUTE';
