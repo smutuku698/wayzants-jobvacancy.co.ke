@@ -16,18 +16,24 @@ import review3 from '../assets/review3.jpg';
 import review4 from '../assets/review4.jpg';
 import onlineLessons from '../assets/online-lessons.jpg';
 
-const allJobs = await getLatestJobs(12).catch(() => []);
+// These 4 queries are independent of each other (featuredJobs' fallback only
+// needs allJobs once both have already resolved) — running them in parallel
+// instead of as 4 sequential awaits cuts the homepage's Supabase round-trip
+// time roughly 4x.
+const [allJobs, featuredJobsRaw, cruiseJobs, localKenyaJobs] = await Promise.all([
+  getLatestJobs(12).catch(() => []),
+  getFeaturedJobs(6).catch(() => null),
+  getJobsByCategorySlug('cruise-ship-jobs', 3).catch(() => []),
+  getLatestLocalJobs(3).catch(() => []),
+]);
 // Paid/featured placements come first; getFeaturedJobs() backfills with the
 // latest approved jobs so this grid is always full, never empty gaps, even
 // before any paid submissions exist.
-const featuredJobs = await getFeaturedJobs(6).catch(() => allJobs.slice(0, 6));
+const featuredJobs = featuredJobsRaw ?? allJobs.slice(0, 6);
 const featuredIds = new Set(featuredJobs.map((j) => j.id));
 const remainingJobs = allJobs.filter((j) => !featuredIds.has(j.id));
 const latestJobs = remainingJobs.length > 0 ? remainingJobs : allJobs;
 const FEATURED_ACCENTS = ['pink', 'purple', 'green', 'orange', 'teal', 'amber'] as const;
-
-const cruiseJobs = await getJobsByCategorySlug('cruise-ship-jobs', 3).catch(() => []);
-const localKenyaJobs = await getLatestLocalJobs(3).catch(() => []);
 
 const trending = [
   { name: 'NGO Jobs', href: '/category/ngo-jobs/' },

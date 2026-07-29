@@ -2,6 +2,8 @@
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import BackToTop from '../components/BackToTop.astro';
+import DisableRightClick from '../components/DisableRightClick.astro';
+import ShareButton from '../components/ShareButton.astro';
 import { SITE_URL, SITE_NAME, organizationJsonLd, websiteJsonLd } from '../lib/seo';
 import '../styles/global.css';
 
@@ -78,5 +80,7 @@ function safeJsonLd(data: unknown) {
     </main>
     <Footer />
     <BackToTop />
+    <ShareButton />
+    <DisableRightClick />
   </body>
 </html>

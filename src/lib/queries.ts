@@ -62,7 +62,9 @@ export async function getLocationBySlug(slug: string): Promise<Location | null> 
 
 export interface JobFilters {
   categorySlug?: string;
+  categoryId?: string;
   locationSlug?: string;
+  locationId?: string;
   jobType?: string;
   remoteOnly?: boolean;
   search?: string;
@@ -86,10 +88,17 @@ export async function getApprovedJobs(filters: JobFilters = {}): Promise<JobList
   // `count: 'exact'` total either way — Postgrest computes that count before
   // the embedded-resource filter applies. Resolving to the real category_id/
   // location_id columns on `jobs` itself fixes both the rows AND the count.
+  // Callers that already have the category/location row (category/[slug].astro,
+  // location/[slug].astro both fetch it for the page title before calling this)
+  // should pass categoryId/locationId directly to skip this redundant lookup —
+  // only resolve by slug when the caller genuinely only has one (e.g. the
+  // /jobs/ filter form, which reads slugs straight from the query string).
   const [category, location] = await Promise.all([
-    filters.categorySlug ? getCategoryBySlug(filters.categorySlug) : Promise.resolve(null),
-    filters.locationSlug ? getLocationBySlug(filters.locationSlug) : Promise.resolve(null),
+    filters.categoryId ? null : filters.categorySlug ? getCategoryBySlug(filters.categorySlug) : Promise.resolve(null),
+    filters.locationId ? null : filters.locationSlug ? getLocationBySlug(filters.locationSlug) : Promise.resolve(null),
   ]);
+  const categoryId = filters.categoryId ?? category?.id;
+  const locationId = filters.locationId ?? location?.id;
 
   let query = getSupabase()
     .from('active_jobs')
@@ -97,11 +106,11 @@ export async function getApprovedJobs(filters: JobFilters = {}): Promise<JobList
     .order('created_at', { ascending: false })
     .range(from, to);
 
-  if (category) {
-    query = query.eq('category_id', category.id);
+  if (categoryId) {
+    query = query.eq('category_id', categoryId);
   }
-  if (location) {
-    query = query.eq('location_id', location.id);
+  if (locationId) {
+    query = query.eq('location_id', locationId);
   }
   if (filters.jobType) {
     query = query.eq('job_type', filters.jobType);

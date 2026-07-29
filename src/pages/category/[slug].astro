@@ -18,7 +18,7 @@ if (!category) {
 
 const url = Astro.url;
 const page = Math.max(1, Number(url.searchParams.get('page') ?? '1') || 1);
-const result = await getApprovedJobs({ categorySlug: category.slug, page }).catch(() => ({
+const result = await getApprovedJobs({ categoryId: category.id, page }).catch(() => ({
   jobs: [],
   total: 0,
   page: 1,
