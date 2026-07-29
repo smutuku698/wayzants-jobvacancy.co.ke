@@ -13,7 +13,10 @@ const pendingJobs = await getPendingJobs().catch(() => []);
   <div class="mx-auto max-w-5xl px-4 py-8 sm:px-6">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <h1 class="text-2xl font-extrabold text-brand-dark">Pending Jobs ({pendingJobs.length})</h1>
-      <a href="/admin/inquiries/" class="text-sm font-semibold text-brand-orange hover:underline">Work With Us Inquiries &rarr;</a>
+      <div class="flex gap-4">
+        <a href="/admin/cv-orders/" class="text-sm font-semibold text-brand-orange hover:underline">CV Orders &rarr;</a>
+        <a href="/admin/inquiries/" class="text-sm font-semibold text-brand-orange hover:underline">Work With Us Inquiries &rarr;</a>
+      </div>
     </div>
     <p class="mt-1 text-slate-500">Review and approve or reject new submissions.</p>
 

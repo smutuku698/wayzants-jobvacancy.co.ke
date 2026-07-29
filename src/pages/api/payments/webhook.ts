@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { verifyWebhookSignature } from '../../../lib/payments';
 import { markJobPaymentPaid, markJobPaymentFailed } from '../../../lib/queries';
+import { isCvOrderReference, promoteCvOrderDraft } from '../../../lib/cv-orders';
 
 export const prerender = false;
 
@@ -35,10 +36,22 @@ export const POST: APIRoute = async ({ request }) => {
 
   try {
     if (event.event === 'charge.success') {
-      const tier = event.data.metadata?.tier === '14day' ? '14day' : '5day';
-      await markJobPaymentPaid(reference, tier);
+      if (isCvOrderReference(reference)) {
+        // Moves the staged draft from KV into the real cv_orders table — see lib/cv-orders.ts.
+        // This is the reliable path for mobile M-Pesa payments (customer backgrounds the
+        // browser to approve the STK push, so the client-side status poll can't be trusted
+        // alone); /api/cv-orders/status also calls this as an idempotent fallback.
+        await promoteCvOrderDraft(reference);
+      } else {
+        const tier = event.data.metadata?.tier === '14day' ? '14day' : '5day';
+        await markJobPaymentPaid(reference, tier);
+      }
     } else if (event.event === 'charge.failed') {
-      await markJobPaymentFailed(reference);
+      // CV-order drafts need no action on failure — they simply expire out of KV (see
+      // CV_DRAFT_TTL_SECONDS) since nothing was ever written to Supabase for them.
+      if (!isCvOrderReference(reference)) {
+        await markJobPaymentFailed(reference);
+      }
     }
   } catch {
     // Swallow — Paystack retries non-2xx responses 3x then quarantines the

@@ -7,64 +7,31 @@ function waLink(message: string) {
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 }
 
-const simpleTierWaLink = waLink(
-  'Hi! I would like to order the Simple CV package (KES 500 — 3 CVs for 3 different jobs, PDF or Word) from JobVacancy.co.ke.'
-);
+// Links land on the /cv-builder/ plan chooser (carrying the chosen template through) rather than
+// guessing a tier — the tiers are now segmented by seniority (0-2yrs vs 8+yrs etc.), so a design
+// on its own doesn't tell us which plan fits; letting the customer pick avoids selling e.g. a
+// "Fresh Graduate CV" template into the KES 12,500 senior/relocation tier.
+const simpleTierOrderHref = `/cv-builder/?template=${SIMPLE_CV_EXAMPLE.id}`;
 const genericWaLink = waLink('Hi! I am interested in getting a professional CV done through JobVacancy.co.ke. Can you help me?');
 
 const title = 'CV & Resume Writing Services in Kenya — Professional CV Writers | JobVacancy.co.ke';
 const description =
-  'Get a professional, ATS-friendly CV or resume written for you in Kenya. Simple CV from KES 500 or a themed CV from KES 1000 — 3 CVs for 3 different jobs, delivered as PDF or Word. Order on WhatsApp.';
+  'Browse real CV and resume design templates for every industry in Kenya. Pick a style and we\'ll write and design an ATS-optimized CV for you, delivered as PDF or Word.';
 ---
 
 <Layout title={title} description={description} path="/cv-and-resume-services/">
-  <Breadcrumbs items={[{ name: 'Home', href: '/' }, { name: 'CV & Resume Services' }]} />
+  <Breadcrumbs items={[{ name: 'Home', href: '/' }, { name: 'CV & Resume Services', href: '/cv-builder/' }, { name: 'CV Designs' }]} />
 
   <div class="mx-auto max-w-6xl px-4 py-8 sm:px-6">
     <div class="mx-auto max-w-3xl text-center">
       <h1 class="text-2xl font-extrabold text-brand-dark sm:text-3xl">Professional CV &amp; Resume Writing Services in Kenya</h1>
       <p class="mt-3 text-slate-600">
         A strong CV gets you shortlisted. Our writers put together a clean, professional, ATS-friendly CV or resume
-        tailored to the jobs you're applying for — browse real CV examples and resume templates below, then order
-        yours on WhatsApp.
+        tailored to the jobs you're applying for — browse real CV examples and resume templates below, pick a
+        style, then continue to build your CV.
       </p>
+      <a href="/cv-builder/" class="mt-4 inline-block text-sm font-semibold text-brand-orange hover:underline">&larr; Back to Plans &amp; Pricing</a>
     </div>
-
-    <!-- Pricing tiers -->
-    <div class="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2">
-      <div class="card flex flex-col p-6 sm:p-8">
-        <h2 class="text-lg font-bold text-brand-dark">Simple CV</h2>
-        <p class="mt-1 text-3xl font-extrabold text-brand-dark">KES 500</p>
-        <ul class="mt-4 flex-1 space-y-2 text-sm text-slate-600">
-          <li>✓ Comprehensive, professional CV — no themes or colours</li>
-          <li>✓ 3 CVs / edits, for up to 3 different jobs you're applying to</li>
-          <li>✓ Delivered as PDF or Word document</li>
-          <li>✓ Pay via M-Pesa after we confirm your order</li>
-        </ul>
-        <a href={simpleTierWaLink} target="_blank" rel="noopener noreferrer" class="btn-primary mt-6 w-full">
-          Order Simple CV on WhatsApp
-        </a>
-      </div>
-
-      <div class="card flex flex-col border-brand-orange p-6 sm:p-8">
-        <h2 class="text-lg font-bold text-brand-dark">Themed CV</h2>
-        <p class="mt-1 text-3xl font-extrabold text-brand-dark">KES 1,000</p>
-        <ul class="mt-4 flex-1 space-y-2 text-sm text-slate-600">
-          <li>✓ Everything in Simple CV, plus a designed theme/layout</li>
-          <li>✓ Pick a template below, or send us a theme you like</li>
-          <li>✓ 3 CVs / edits, for up to 3 different jobs you're applying to</li>
-          <li>✓ Delivered as PDF or Word document</li>
-        </ul>
-        <a href="#themed-templates" class="btn-primary mt-6 w-full">
-          Browse Themed Templates
-        </a>
-      </div>
-    </div>
-
-    <p class="mx-auto mt-4 max-w-2xl text-center text-xs text-slate-400">
-      Once we receive your order on WhatsApp, we'll call you back to get the details to add to your CV. Payment is by
-      M-Pesa, confirmed directly with you at that point.
-    </p>
 
     <!-- Simple CV example -->
     <section class="mt-14">
@@ -76,7 +43,7 @@ const description =
           class="cv-card-trigger group block w-full cursor-zoom-in overflow-hidden rounded-xl border border-border bg-white shadow-sm"
           data-image={SIMPLE_CV_EXAMPLE.image}
           data-title={SIMPLE_CV_EXAMPLE.title}
-          data-wa={simpleTierWaLink}
+          data-wa={simpleTierOrderHref}
         >
           <div class="aspect-[3/4] overflow-hidden bg-cream">
             <img
@@ -95,14 +62,12 @@ const description =
     <section id="themed-templates" class="mt-14 scroll-mt-20">
       <h2 class="text-xl font-bold text-brand-dark">Themed CV Templates — Pick Your Style</h2>
       <p class="mt-1 text-sm text-slate-500">
-        Click any CV example to view it full-size, then order it on WhatsApp — or send us a different theme you like.
+        Click any CV example to view it full-size, then continue to build your CV in that style.
       </p>
 
       <div class="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         {CV_TEMPLATES.map((t) => {
-          const orderLink = waLink(
-            `Hi! I'd like to order the Themed CV package (KES 1000) styled like the "${t.title}" template (${t.id}) I saw on JobVacancy.co.ke.`
-          );
+          const orderLink = `/cv-builder/?template=${t.id}`;
           return (
             <div class="card flex flex-col overflow-hidden">
               <button
@@ -128,7 +93,7 @@ const description =
                   <span class="badge bg-brand-dark/5 text-[10px] text-brand-dark">{t.industry}</span>
                   <span class="badge bg-brand-dark/5 text-[10px] text-brand-dark">{t.id}</span>
                 </div>
-                <a href={orderLink} target="_blank" rel="noopener noreferrer" class="btn-secondary mt-3 !py-1.5 text-xs">
+                <a href={orderLink} class="btn-secondary mt-3 !py-1.5 text-xs">
                   Get a CV Like This
                 </a>
               </div>
@@ -163,7 +128,7 @@ const description =
       </div>
     </div>
     <div class="shrink-0 border-t border-white/10 bg-black p-4 text-center">
-      <a id="cv-modal-order" href="#" target="_blank" rel="noopener noreferrer" class="btn-primary w-full sm:w-auto">
+      <a id="cv-modal-order" href="#" class="btn-primary w-full sm:w-auto">
         Get a CV Like This
       </a>
       <p class="mt-2 text-xs text-white/60">Scroll to view the full CV • Tap ✕ or outside to close</p>

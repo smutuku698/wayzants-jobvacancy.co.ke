@@ -1,0 +1,211 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { getCvOrders } from '../../../lib/queries';
+import { timeAgo } from '../../../lib/format';
+import { getPricingTier, getAddon, pathTypeLabel } from '../../../lib/cv-orders';
+import { CV_TEMPLATES } from '../../../lib/cv-templates';
+import type { CvOrderStatus } from '../../../lib/types';
+
+export const prerender = false;
+
+const requestedTab = Astro.url.searchParams.get('tab');
+const tab: CvOrderStatus = ['new', 'in_progress', 'delivered', 'archived'].includes(requestedTab ?? '')
+  ? (requestedTab as CvOrderStatus)
+  : 'new';
+
+const [newCount, orders] = await Promise.all([
+  getCvOrders('new').then((rows) => rows.length).catch(() => 0),
+  getCvOrders(tab).catch(() => []),
+]);
+
+const TABS: { value: CvOrderStatus; label: string }[] = [
+  { value: 'new', label: `New${newCount ? ` (${newCount})` : ''}` },
+  { value: 'in_progress', label: 'In Progress' },
+  { value: 'delivered', label: 'Delivered' },
+  { value: 'archived', label: 'Archived' },
+];
+
+const NEXT_STATUS: Record<CvOrderStatus, CvOrderStatus | null> = {
+  new: 'in_progress',
+  in_progress: 'delivered',
+  delivered: 'archived',
+  archived: null,
+};
+const NEXT_LABEL: Record<string, string> = {
+  in_progress: 'Start Working On It',
+  delivered: 'Mark Delivered',
+  archived: 'Archive',
+};
+
+function waLink(phone: string, name: string) {
+  const digits = phone.replace(/[^\d]/g, '');
+  return `https://wa.me/${digits}?text=${encodeURIComponent(`Hi ${name}, this is JobVacancy.co.ke regarding your CV order.`)}`;
+}
+---
+
+<Layout title="Admin — CV Orders | JobVacancy.co.ke" description="Paid CV builder orders." path="/admin/cv-orders/" noindex>
+  <div class="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h1 class="text-2xl font-extrabold text-brand-dark">CV Orders</h1>
+      <a href="/admin/" class="text-sm font-semibold text-brand-orange hover:underline">&larr; Pending Jobs</a>
+    </div>
+    <p class="mt-1 text-slate-500">Paid CV/resume builder orders — only appear here once M-Pesa payment is confirmed.</p>
+
+    <div class="mt-6 flex flex-wrap gap-2 border-b border-slate-200">
+      {TABS.map((t) => (
+        <a
+          href={`/admin/cv-orders/?tab=${t.value}`}
+          class={`-mb-px border-b-2 px-3 py-2 text-sm font-semibold ${
+            tab === t.value ? 'border-brand-orange text-brand-orange' : 'border-transparent text-slate-500 hover:text-brand-dark'
+          }`}
+        >
+          {t.label}
+        </a>
+      ))}
+    </div>
+
+    {orders.length === 0 ? (
+      <div class="card mt-6 p-10 text-center text-slate-500">Nothing here.</div>
+    ) : (
+      <div class="mt-6 space-y-5">
+        {orders.map((order) => {
+          const tier = getPricingTier(order.tier);
+          const template = order.template_id ? CV_TEMPLATES.find((t) => t.id === order.template_id) : null;
+          const nextStatus = NEXT_STATUS[order.status];
+          return (
+            <div class="card p-5">
+              <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="badge bg-brand-orange/10 text-brand-orange">{tier?.emoji} {tier?.name ?? order.tier}</span>
+                    <span class="badge bg-slate-100 text-slate-600">{pathTypeLabel(order.path_type)}</span>
+                    {template && <span class="badge bg-brand-green/15 text-brand-green-dark">{template.title}</span>}
+                    {order.addons?.map((id) => (
+                      <span class="badge bg-brand-yellow/25 text-brand-dark">&#9889; {getAddon(id)?.name ?? id}</span>
+                    ))}
+                  </div>
+                  <h2 class="mt-1 text-lg font-bold text-brand-dark">{order.contact_name}</h2>
+                  <p class="text-xs text-slate-400">Paid {timeAgo(order.created_at)}</p>
+                </div>
+                <div class="flex shrink-0 gap-2">
+                  {nextStatus && (
+                    <form method="post" action={`/api/admin/cv-orders/${order.id}/status/`}>
+                      <input type="hidden" name="status" value={nextStatus} />
+                      <input type="hidden" name="from" value={tab} />
+                      <button type="submit" class="btn-primary !py-2 !px-4 text-sm">{NEXT_LABEL[nextStatus]}</button>
+                    </form>
+                  )}
+                </div>
+              </div>
+
+              <!-- Buyer Details — every contact/profile field we hold on this person, in one place -->
+              <div class="mt-4 rounded-lg bg-cream p-4">
+                <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Buyer Details</p>
+                <div class="mt-2 grid grid-cols-1 gap-x-6 gap-y-1.5 text-sm text-brand-dark sm:grid-cols-2">
+                  <p><b>Email:</b> <a href={`mailto:${order.contact_email}`} class="text-brand-orange hover:underline">{order.contact_email}</a></p>
+                  <p><b>Phone/WhatsApp:</b> <a href={waLink(order.contact_phone, order.contact_name)} target="_blank" rel="noopener noreferrer" class="text-brand-green-dark hover:underline">{order.contact_phone}</a></p>
+                  {order.path_type === 'form' && order.cv_data?.personal.location && <p><b>Location:</b> {order.cv_data.personal.location}</p>}
+                  {order.path_type === 'form' && order.cv_data?.personal.professional_title && <p><b>Title:</b> {order.cv_data.personal.professional_title}</p>}
+                  {order.linkedin_url && <p><b>LinkedIn:</b> <a href={order.linkedin_url} target="_blank" rel="noopener noreferrer" class="text-brand-orange hover:underline">{order.linkedin_url}</a></p>}
+                  {order.portfolio_url && <p><b>Portfolio:</b> <a href={order.portfolio_url} target="_blank" rel="noopener noreferrer" class="text-brand-orange hover:underline">{order.portfolio_url}</a></p>}
+                </div>
+                {order.target_job && (
+                  <p class="mt-2 border-t border-black/5 pt-2 text-sm text-brand-dark"><b>Target job:</b> {order.target_job}</p>
+                )}
+                {order.path_type === 'form' && order.cv_data?.personal.summary && (
+                  <p class="mt-2 border-t border-black/5 pt-2 text-sm italic text-brand-dark">{order.cv_data.personal.summary}</p>
+                )}
+              </div>
+
+              <!-- Package & Fulfillment Checklist — exactly what's owed on this order -->
+              {tier && (
+                <div class="mt-4 rounded-lg border border-slate-200 p-4">
+                  <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Package &amp; What Must Be Provided</p>
+                  <p class="mt-1 text-sm text-brand-dark">
+                    <b>{tier.emoji} {tier.name}</b> — KES {tier.priceKes.toLocaleString()} &middot; Delivery: {tier.deliveryTime}
+                  </p>
+                  <p class="text-xs text-slate-500">{tier.revisionsText}</p>
+                  {order.addons?.length > 0 && (
+                    <p class="mt-1 text-sm text-brand-dark">
+                      <b>Add-ons:</b> {order.addons.map((id) => `${getAddon(id)?.name} (+KES ${getAddon(id)?.priceKes.toLocaleString()})`).join(', ')}
+                    </p>
+                  )}
+                  <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-600">
+                    {tier.includes.map((item) => <li>{item}</li>)}
+                  </ul>
+                </div>
+              )}
+
+              {order.path_type === 'upload' ? (
+                <div class="mt-4 space-y-2 rounded-lg border border-slate-200 p-4 text-sm text-slate-600">
+                  <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Uploaded CV &amp; Notes</p>
+                  {order.file_url && (
+                    <p>
+                      <a href={order.file_url} target="_blank" rel="noopener noreferrer" class="font-semibold text-brand-orange hover:underline">
+                        Download uploaded CV &rarr;
+                      </a>
+                    </p>
+                  )}
+                  {order.upload_focus && (
+                    <ul class="list-disc pl-5">
+                      {order.upload_focus.update_work_experience && <li>Update work experience / details</li>}
+                      {order.upload_focus.redesign_only && <li>Redesign only — details already correct</li>}
+                      {order.upload_focus.add_section && <li>Add a missing section</li>}
+                    </ul>
+                  )}
+                  {order.upload_notes && <p><b>Notes:</b> {order.upload_notes}</p>}
+                </div>
+              ) : (
+                order.cv_data && (
+                  <div class="mt-4 space-y-3 rounded-lg border border-slate-200 p-4 text-sm text-slate-600">
+                    <p class="text-xs font-bold uppercase tracking-wide text-slate-400">CV Content Provided</p>
+                    {order.cv_data.education.length > 0 && (
+                      <div>
+                        <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Education</p>
+                        {order.cv_data.education.map((e) => (
+                          <p>{e.qualification} — {e.institution} ({e.start_year}–{e.end_year})</p>
+                        ))}
+                      </div>
+                    )}
+
+                    {order.cv_data.experience.length > 0 && (
+                      <div>
+                        <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Work Experience</p>
+                        {order.cv_data.experience.map((e) => (
+                          <div>
+                            <p>{e.title} at {e.employer} ({e.start_date}–{e.is_current ? 'Present' : e.end_date})</p>
+                            {e.responsibilities && <p class="whitespace-pre-line pl-3 text-xs text-slate-500">{e.responsibilities}</p>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {order.cv_data.skills.length > 0 && (
+                      <p><b class="text-brand-dark">Skills:</b> {order.cv_data.skills.join(', ')}</p>
+                    )}
+
+                    {order.cv_data.certifications.length > 0 && (
+                      <div>
+                        <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Certifications</p>
+                        {order.cv_data.certifications.map((c) => <p>{c.name} — {c.issuer} ({c.year})</p>)}
+                      </div>
+                    )}
+
+                    {order.cv_data.referees.length > 0 && (
+                      <div>
+                        <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Referees</p>
+                        {order.cv_data.referees.map((r) => (
+                          <p>{r.name} — {r.relationship}, {r.organization} &middot; {r.phone}{r.email ? ` &middot; ${r.email}` : ''}</p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              )}
+            </div>
+          );
+        })}
+      </div>
+    )}
+  </div>
+</Layout>

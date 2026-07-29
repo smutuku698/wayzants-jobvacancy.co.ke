@@ -108,18 +108,13 @@ export function jobPostingJsonLd(job: JobWithRelations) {
     directApply: job.application_method === 'url',
   };
 
-  if (job.deadline) {
-    json.validThrough = new Date(job.deadline).toISOString();
-  } else {
-    // No explicit deadline — mirror the active_jobs view's 90-day free-listing
-    // cutoff (migration 0011) so the structured data agrees with the "closed"
-    // state the page itself renders past that point, instead of implicitly
-    // telling Google the listing is still open indefinitely.
-    const ninetyDaysAfterPosted = new Date(new Date(job.created_at).getTime() + 90 * 24 * 60 * 60 * 1000);
-    if (ninetyDaysAfterPosted.getTime() <= Date.now()) {
-      json.validThrough = ninetyDaysAfterPosted.toISOString();
-    }
-  }
+  // Every job is treated as valid for 90 days from posting for structured-data
+  // purposes, regardless of `deadline` — this is invisible to users (the page
+  // and all listings keep showing the job normally, per policy), it only
+  // tells Google's Jobs-search feature the posting has an end date, which is
+  // what keeps a large catalog of long-lived listings from reading as stale/
+  // spammy to Google without ever having to take anything off the site.
+  json.validThrough = new Date(new Date(job.created_at).getTime() + 90 * 24 * 60 * 60 * 1000).toISOString();
 
   if (job.is_remote) {
     json.jobLocationType = 'TELECOMMUTE';

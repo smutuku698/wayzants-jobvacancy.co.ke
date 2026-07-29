@@ -11,5 +11,9 @@ declare namespace Cloudflare {
     SUPABASE_SERVICE_ROLE_KEY: string;
     ADMIN_PASSWORD: string;
     PAYSTACK_SECRET_KEY: string;
+    /** Holds CV-builder submissions between "customer clicked Pay" and Paystack confirming
+     * payment — see src/lib/cv-orders.ts. Binding added manually here because the namespace
+     * itself is created via the Cloudflare dashboard, not `wrangler kv namespace create`. */
+    CV_ORDER_DRAFTS: KVNamespace;
   }
 }

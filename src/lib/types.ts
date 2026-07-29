@@ -111,3 +111,114 @@ export const INQUIRY_TYPE_LABELS: Record<InquiryType, string> = {
   sponsorship: 'Sponsorship',
   advertising: 'Advertising Opportunity',
 };
+
+// ---------------------------------------------------------------------------
+// CV & Resume builder
+// ---------------------------------------------------------------------------
+
+export type CvOrderTier = 'standard' | 'professional' | 'premium' | 'executive';
+export type CvAddonId = 'express_delivery' | 'interview_prep' | 'bilingual_upgrade';
+export type CvOrderPathType = 'form' | 'upload';
+export type CvOrderStatus = 'new' | 'in_progress' | 'delivered' | 'archived';
+
+export interface CvEducationEntry {
+  institution: string;
+  qualification: string;
+  field: string;
+  start_year: string;
+  end_year: string;
+}
+
+export interface CvExperienceEntry {
+  employer: string;
+  title: string;
+  start_date: string;
+  end_date: string;
+  is_current: boolean;
+  responsibilities: string;
+}
+
+export interface CvCertificationEntry {
+  name: string;
+  issuer: string;
+  year: string;
+}
+
+export interface CvRefereeEntry {
+  name: string;
+  relationship: string;
+  organization: string;
+  phone: string;
+  email: string;
+}
+
+export interface CvWizardData {
+  personal: {
+    full_name: string;
+    phone: string;
+    email: string;
+    location: string;
+    professional_title: string;
+    summary: string;
+    linkedin_url: string;
+    portfolio_url: string;
+  };
+  education: CvEducationEntry[];
+  experience: CvExperienceEntry[];
+  skills: string[];
+  certifications: CvCertificationEntry[];
+  referees: CvRefereeEntry[];
+}
+
+export interface CvUploadFocus {
+  update_work_experience: boolean;
+  redesign_only: boolean;
+  add_section: boolean;
+  other: string;
+}
+
+/** What's staged in Cloudflare KV between "customer clicked Pay" and "Paystack confirmed
+ * payment" — never written to Supabase until then. See lib/cv-orders.ts. */
+export interface CvOrderDraft {
+  path_type: CvOrderPathType;
+  tier: CvOrderTier;
+  addons: CvAddonId[];
+  template_id: string | null;
+  contact_name: string;
+  contact_phone: string;
+  contact_email: string;
+  /** Always populated from cv_data.personal for the wizard path, or from the upload form's own
+   * fields for the upload path — one place the admin dashboard can always read from regardless
+   * of which path the order came through. */
+  linkedin_url: string | null;
+  portfolio_url: string | null;
+  target_job: string | null;
+  cv_data: CvWizardData | null;
+  upload_notes: string | null;
+  upload_focus: CvUploadFocus | null;
+  file_name: string | null;
+  file_type: string | null;
+  payment_phone: string;
+}
+
+export interface CvOrder {
+  id: string;
+  created_at: string;
+  status: CvOrderStatus;
+  path_type: CvOrderPathType;
+  tier: CvOrderTier;
+  addons: CvAddonId[];
+  template_id: string | null;
+  contact_name: string;
+  contact_phone: string;
+  contact_email: string;
+  linkedin_url: string | null;
+  portfolio_url: string | null;
+  target_job: string | null;
+  cv_data: CvWizardData | null;
+  upload_notes: string | null;
+  upload_focus: CvUploadFocus | null;
+  file_url: string | null;
+  payment_reference: string;
+  payment_phone: string;
+}

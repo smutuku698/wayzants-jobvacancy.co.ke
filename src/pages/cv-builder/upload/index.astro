@@ -1,0 +1,210 @@
+---
+export const prerender = false;
+import Layout from '../../../layouts/Layout.astro';
+import Breadcrumbs from '../../../components/Breadcrumbs.astro';
+import DiamondBackdrop from '../../../components/cv-builder/DiamondBackdrop.astro';
+import { getPricingTier, resolveAddons, getAddon } from '../../../lib/cv-orders';
+import { CV_TEMPLATES } from '../../../lib/cv-templates';
+
+const tierId = Astro.url.searchParams.get('tier') ?? '';
+const tier = getPricingTier(tierId);
+
+if (!tier) {
+  return Astro.redirect('/cv-builder/');
+}
+
+const templateId = Astro.url.searchParams.get('template') ?? '';
+const template = CV_TEMPLATES.find((t) => t.id === templateId) ?? null;
+
+const addonsParam = Astro.url.searchParams.get('addons') ?? '';
+const { addons, addonsTotalKes } = resolveAddons(addonsParam.split(',').filter(Boolean));
+const totalKes = tier.priceKes + addonsTotalKes;
+
+const title = `Upload Your CV — ${tier.name} | JobVacancy.co.ke`;
+const description = 'Upload your existing CV and tell us what to change — we\'ll rewrite it as an ATS-optimized CV.';
+---
+
+<Layout title={title} description={description} path="/cv-builder/upload/" noindex>
+  <Breadcrumbs items={[{ name: 'Home', href: '/' }, { name: 'CV & Resume Services', href: '/cv-builder/' }, { name: 'Upload My CV' }]} />
+
+  <section class="relative overflow-hidden bg-cream py-8">
+    <DiamondBackdrop variant="scatter" />
+    <div class="relative mx-auto max-w-2xl px-4 sm:px-6">
+      <div class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-white px-4 py-3 text-sm">
+        <span class="font-semibold text-brand-dark">
+          Plan: <span class="text-brand-orange">{tier.name}</span> — KES {tier.priceKes.toLocaleString()}
+          {template && <> &middot; Design reference: <span class="text-brand-orange">{template.title}</span></>}
+          {addons.length > 0 && (
+            <>
+              {' '}&middot; Add-ons: {addons.map((id) => getAddon(id)?.name).join(', ')} (+KES {addonsTotalKes.toLocaleString()})
+            </>
+          )}
+          {addons.length > 0 && <> &middot; <b>Total: KES {totalKes.toLocaleString()}</b></>}
+        </span>
+        <a href="/cv-builder/" class="font-semibold text-brand-orange hover:underline">Change plan</a>
+      </div>
+
+      <h1 class="mt-6 text-2xl font-extrabold text-brand-dark sm:text-3xl">Upload Your Existing CV</h1>
+      <p class="mt-2 text-slate-600">
+        Send us your current CV and a few details, and we'll rework it into an ATS-optimized CV — no need to
+        re-type everything into a form.
+      </p>
+
+      <form id="cv-upload-form" class="card mt-6 space-y-6 p-6 sm:p-8">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label class="mb-1.5 block text-sm font-semibold text-brand-dark">Full Name *</label>
+            <input id="contact_name" required maxlength="150" type="text" placeholder="e.g. Jane Wanjiku Mwangi" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+          </div>
+          <div>
+            <label class="mb-1.5 block text-sm font-semibold text-brand-dark">Phone Number *</label>
+            <input id="contact_phone" required type="tel" inputmode="tel" placeholder="e.g. 0722 123 456" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+          </div>
+        </div>
+        <div>
+          <label class="mb-1.5 block text-sm font-semibold text-brand-dark">Email Address *</label>
+          <input id="contact_email" required type="email" placeholder="e.g. jane.wanjiku@gmail.com" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+        </div>
+
+        <div>
+          <label class="mb-1.5 block text-sm font-semibold text-brand-dark">Your Current CV *</label>
+          <input id="cv_file" required type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none file:mr-3 file:rounded-md file:border-0 file:bg-cream file:px-3 file:py-1.5 file:text-sm focus:border-brand-orange" />
+          <p class="mt-1 text-xs text-slate-500">PDF, DOC or DOCX, up to 5MB.</p>
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label class="mb-1.5 block text-sm font-semibold text-brand-dark">LinkedIn Profile (optional)</label>
+            <input id="linkedin_url" type="url" placeholder="e.g. linkedin.com/in/janewanjiku" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+          </div>
+          <div>
+            <label class="mb-1.5 block text-sm font-semibold text-brand-dark">Website / Portfolio Link (optional)</label>
+            <input id="portfolio_url" type="url" placeholder="e.g. your personal site or project portfolio link" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+          </div>
+        </div>
+
+        <div>
+          <label class="mb-1.5 block text-sm font-semibold text-brand-dark">Job Link or Description (optional, recommended)</label>
+          <textarea id="target_job" rows="3" placeholder="e.g. Paste the job advert link, or describe the role/industry you're applying to" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange"></textarea>
+          <p class="mt-1 text-xs text-slate-500">Helps us tailor your CV precisely to the job you want.</p>
+        </div>
+
+        <fieldset class="space-y-2 border-t border-slate-100 pt-5">
+          <legend class="text-sm font-bold uppercase tracking-wide text-slate-500">What should we focus on?</legend>
+          <p class="text-xs text-slate-500">Optional — tick anything that applies, or just leave a note below.</p>
+          <label class="flex items-center gap-2 text-sm text-brand-dark">
+            <input type="checkbox" id="focus_update_experience" class="h-4 w-4 rounded border-slate-300 text-brand-orange focus:ring-brand-orange" />
+            Update my work experience / details
+          </label>
+          <label class="flex items-center gap-2 text-sm text-brand-dark">
+            <input type="checkbox" id="focus_redesign_only" class="h-4 w-4 rounded border-slate-300 text-brand-orange focus:ring-brand-orange" />
+            Just redesign it — my details are already correct
+          </label>
+          <label class="flex items-center gap-2 text-sm text-brand-dark">
+            <input type="checkbox" id="focus_add_section" class="h-4 w-4 rounded border-slate-300 text-brand-orange focus:ring-brand-orange" />
+            Add a section that's missing (e.g. skills, certifications)
+          </label>
+          <div>
+            <label class="mb-1.5 mt-2 block text-sm font-semibold text-brand-dark">Anything else? (optional)</label>
+            <textarea id="focus_other" rows="3" placeholder="e.g. Any other notes for our writers" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange"></textarea>
+          </div>
+        </fieldset>
+
+        <div class="border-t border-slate-100 pt-6">
+          <label class="mb-1.5 block text-sm font-semibold text-brand-dark">M-Pesa Phone Number *</label>
+          <input id="mpesa_phone" required type="tel" inputmode="tel" placeholder="e.g. 0722 123 456" class="w-full max-w-xs rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+          <p id="mpesa-phone-error" class="mt-1 hidden text-xs text-red-600">Enter a valid Safaricom/Airtel number.</p>
+        </div>
+
+        <p id="submit-error" class="hidden rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"></p>
+
+        <button type="button" id="upload-pay-btn" class="btn-primary w-full !py-3 text-base">
+          Pay KES {totalKes.toLocaleString()} &amp; Submit
+        </button>
+        <p class="text-center text-xs text-slate-400">
+          Your CV and details are only saved once payment is confirmed — nothing is sent to our writers until then.
+        </p>
+      </form>
+    </div>
+  </section>
+
+  <script define:vars={{ tierId: tier.id, templateId: template?.id ?? '', addonsCsv: addons.join(',') }}>
+    const KE_PHONE_RE = /^(?:\+?254|0)([17]\d{8})$/;
+    const MAX_FILE_BYTES = 5 * 1024 * 1024;
+
+    const payBtn = document.getElementById('upload-pay-btn');
+    const submitError = document.getElementById('submit-error');
+    const mpesaError = document.getElementById('mpesa-phone-error');
+
+    function val(id) { return document.getElementById(id).value.trim(); }
+
+    payBtn.addEventListener('click', async () => {
+      submitError.classList.add('hidden');
+      mpesaError.classList.add('hidden');
+
+      const contact_name = val('contact_name');
+      const contact_phone = val('contact_phone');
+      const contact_email = val('contact_email');
+      const fileInput = document.getElementById('cv_file');
+      const file = fileInput.files?.[0];
+      const mpesaDigits = val('mpesa_phone').replace(/[^\d+]/g, '');
+
+      if (!contact_name || !contact_phone || !contact_email) {
+        submitError.textContent = 'Please fill in your name, phone and email.';
+        submitError.classList.remove('hidden');
+        return;
+      }
+      if (!file) {
+        submitError.textContent = 'Please attach your CV file (PDF, DOC or DOCX).';
+        submitError.classList.remove('hidden');
+        return;
+      }
+      if (file.size > MAX_FILE_BYTES) {
+        submitError.textContent = 'That file is too large — please keep it under 5MB.';
+        submitError.classList.remove('hidden');
+        return;
+      }
+      if (!KE_PHONE_RE.test(mpesaDigits)) {
+        mpesaError.classList.remove('hidden');
+        return;
+      }
+
+      payBtn.disabled = true;
+      payBtn.textContent = 'Starting payment…';
+
+      const upload_focus = {
+        update_work_experience: document.getElementById('focus_update_experience').checked,
+        redesign_only: document.getElementById('focus_redesign_only').checked,
+        add_section: document.getElementById('focus_add_section').checked,
+        other: val('focus_other'),
+      };
+
+      const fd = new FormData();
+      fd.set('path_type', 'upload');
+      fd.set('tier', tierId);
+      fd.set('template_id', templateId);
+      fd.set('addons', addonsCsv);
+      fd.set('contact_name', contact_name);
+      fd.set('contact_phone', contact_phone);
+      fd.set('contact_email', contact_email);
+      fd.set('linkedin_url', val('linkedin_url'));
+      fd.set('portfolio_url', val('portfolio_url'));
+      fd.set('target_job', val('target_job'));
+      fd.set('upload_focus', JSON.stringify(upload_focus));
+      fd.set('payment_phone', mpesaDigits);
+      fd.set('file', file);
+
+      try {
+        const res = await fetch('/api/cv-orders/stage/', { method: 'POST', body: fd });
+        const body = await res.json();
+        if (!res.ok || !body.ok) throw new Error(body.error || 'Could not start payment.');
+        window.location.href = body.redirect;
+      } catch (err) {
+        submitError.textContent = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
+        submitError.classList.remove('hidden');
+        payBtn.disabled = false;
+        payBtn.textContent = 'Pay & Submit';
+      }
+    });
+  </script>
+</Layout>

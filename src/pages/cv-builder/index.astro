@@ -1,0 +1,304 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import DiamondBackdrop from '../../components/cv-builder/DiamondBackdrop.astro';
+import { CV_PRICING_TIERS, CV_ADDONS } from '../../lib/cv-orders';
+import { CV_TEMPLATES } from '../../lib/cv-templates';
+import { faqJsonLd } from '../../lib/seo';
+
+const templateId = Astro.url.searchParams.get('template') ?? '';
+const template = CV_TEMPLATES.find((t) => t.id === templateId) ?? null;
+
+const title = 'Build Your CV — ATS-Optimized CV & Resume Writing | JobVacancy.co.ke';
+const description =
+  'Get an ATS-optimized CV written for you. Answer a few guided questions or upload your existing CV, then pay securely with M-Pesa — delivered as PDF or Word.';
+
+// User's own copy, pasted verbatim, with two edits for accuracy (noted inline) — nothing else
+// changed — plus 2 extra Q&As appended that describe how this system actually works (payment
+// security / delivery), not part of the original pasted list.
+const FAQS = [
+  {
+    q: 'What is an ATS and why does my CV need to be compliant?',
+    a: "An ATS is an Applicant Tracking System software used by over 90% of Fortune 500 companies and global recruitment agencies to automatically scan, rank, and filter applications. If your CV uses unreadable graphics, complex tables, or lacks exact industry keywords, these algorithmic bots will auto-reject your file. Our templates are scientifically coded to pass through strict parsing systems like Taleo and Workday, ensuring your document safely reaches human hands.",
+  },
+  {
+    q: 'What does Country-Specific Target Styling mean for global applications?',
+    a: 'Recruitment formatting standards differ aggressively across the globe, and submitting the wrong style will disqualify you instantly. For example, North American firms demand a highly strict, non-photo US Reverse-Chronological Resume that focuses entirely on data metrics. Conversely, European and UK companies expect a traditional Curriculum Vitae (CV) format, while the Gulf Region (UAE, Saudi Arabia) requires explicit structural corporate governance frameworks. We style your documents to match the exact cultural and professional expectations of your destination market.',
+  },
+  {
+    q: 'Who conducts the Global Interview Prep Masterclass?',
+    a: 'Your coaching is handled exclusively by certified, corporate international interviewers who have years of active experience hiring talent for US, UK, and multinational firms. This is not a generic advice chat. It is a live, high-pressure 1-hour Zoom mock interview tailored strictly to your target job using the rigid STAR method (Situation, Task, Action, Result) to train you to speak like an elite global professional.',
+  },
+  {
+    q: 'How does the LinkedIn Optimization and VIP Profile Overhaul work?',
+    a: 'This service is entirely managed by experienced social media personal branding specialists who understand the LinkedIn recruiter search algorithm. For Premium users, we provide a precise step-by-step DIY checklist. For Executive users, our specialists securely manage your account backend to rewrite your About summary into an engaging professional narrative, inject high-density search terms into your headline, and re-engineer your profile settings to flag international headhunters.',
+  },
+  {
+    q: 'What is the 1-Page Executive Biography included in the highest tier?',
+    a: 'Written exclusively for C-Suite packages, this is a highly sophisticated, narrative storytelling biography used outside of traditional job applications. It is crafted to showcase your corporate governance, organizational transformations, and multi-million-dollar fiscal stewardship. This asset is specifically required when pitching to international boards, venture capital firms, global NGOs, or when speaking at international industry panels.',
+  },
+  {
+    q: 'Why did the base package price change, and what does the Job Board List include?',
+    a: 'We dropped our entry-level price significantly to ensure undercapitalized job seekers and ambitious fresh graduates can access elite documents without financial strain. To fast-track your job search, this tier now includes a targeted, curated blueprint of top-performing local and international job boards, categorizing exactly where to apply based on your specific qualifications to save you hundreds of hours of manual browsing.',
+  },
+  {
+    q: 'How do the post-delivery revisions work?',
+    a: 'Once our writing team delivers your first draft, your dedicated revision window begins. Depending on your chosen tier, you receive up to 2 rounds, 3 rounds, or entirely unlimited revisions for up to 30 days. This allows you to collaborate directly with your writer to tweak positioning, adjust wording, and ensure your final documents align flawlessly with your high-end international career goals.',
+  },
+  {
+    q: 'What makes the Executive Tier separate from the Premium Tier?',
+    a: 'The Premium tier is designed for senior managers focusing on a specific destination market or single country framework. The Executive Tier is a complete, multi-format master package built for global C-Suite leaders. It provides dual-delivery of both standard US Executive Resume layouts and UK/International CV formats simultaneously. It also includes secure, hands-on profile management by our elite personal branding team and a dedicated, confidential communication line to your assigned executive copywriter.',
+  },
+  {
+    q: 'Can I upgrade my package to a higher tier later if my career goals change?',
+    // Edited from the pasted copy: the original claimed an automated "pay the exact price
+    // difference" system — that doesn't exist (there's no accounts/upgrade billing feature).
+    // Reworded to match how this actually works today: a manual WhatsApp request.
+    a: "Yes. If you start with a mid-career package and suddenly secure an international relocation or executive board opportunity, just message us on WhatsApp — we'll arrange the upgrade and the price difference with you directly, unlocking advanced international styling, longer revision windows, and strategy coaching sessions.",
+  },
+  {
+    q: 'What is the Bi-Lingual CV Upgrade, and who performs the translation?',
+    a: 'This upgrade is not a machine-generated translation. Your CV is manually rewritten and culturally optimized by professional bilingual corporate translators fluent in English, French, or German. They do not just translate words; they adjust corporate idioms, rewrite job titles to match regional market standards, and ensure your professional achievements carry the exact same weight and sophistication in both languages.',
+  },
+  {
+    q: 'How does the 24-Hour Express Delivery add-on work?',
+    a: 'When you purchase this upgrade, your order bypasses our standard project queue and is automatically routed to our senior crisis-response writing team. A dedicated writer is assigned to your file immediately, ensuring that your fully optimized, ATS-compliant documents are delivered directly to your inbox within exactly 24 hours of your initial questionnaire submission.',
+  },
+  {
+    q: 'Why do you require my LinkedIn, portfolio, or website links during onboarding?',
+    a: 'Global headhunters look at your entire digital footprint, not just a static document. By capturing your existing portfolio sites, personal websites, and professional networks during our wizard setup, our data specialists can analyze your public projects, code repositories, or design work. This allows our writing team to extract hidden metrics and align your written CV perfectly with your live digital proof.',
+  },
+  {
+    q: 'Are my career data, documents, and corporate records kept confidential?',
+    // Edited from the pasted copy: removed "login credentials for profile updates" — this
+    // service has no user accounts/logins, so that specific claim would be inaccurate.
+    a: 'Absolute data privacy is guaranteed. Because we handle high-stakes corporate data, executive profiles, and sensitive career histories, we employ bank-grade encryption across our platform. Your personal documents and private strategy sessions are strictly confidential and are never shared, outsourced, or stored on public servers.',
+  },
+  {
+    q: 'How will I receive my finished CV?',
+    a: "Once your writer completes your documents, we deliver them directly to the email and WhatsApp number you provided during checkout, within your plan's stated delivery window. If you have any questions in the meantime, message us on WhatsApp any time.",
+  },
+  {
+    q: 'Is my payment secure, and is my information saved before I pay?',
+    a: "Yes. Payment is processed securely via Paystack's M-Pesa integration. Unlike many services, none of your CV details are saved to our systems until your payment is fully confirmed — if a payment doesn't go through, your submitted information is simply discarded, never stored.",
+  },
+];
+
+const faqSchema = faqJsonLd(FAQS.map((f) => ({ question: f.q, answer: f.a })));
+---
+
+<Layout title={title} description={description} path="/cv-builder/" jsonLd={faqSchema}>
+  <Breadcrumbs items={[{ name: 'Home', href: '/' }, { name: 'CV & Resume Services' }]} />
+
+  <!-- Hero -->
+  <section class="relative overflow-hidden bg-cream">
+    <DiamondBackdrop variant="hero" />
+    <div class="relative mx-auto max-w-3xl px-4 py-14 text-center sm:px-6">
+      <span class="badge bg-brand-orange/10 text-brand-orange">ATS-Optimized CV Writing</span>
+      <h1 class="mt-5 text-3xl font-black leading-tight text-brand-dark sm:text-4xl">
+        A CV Built to <span class="highlight-mark">Pass ATS Screening</span> &amp; Get You Shortlisted
+      </h1>
+      <p class="mx-auto mt-5 max-w-xl text-base text-brand-dark/60 sm:text-lg">
+        Every CV we write is ATS-optimized by a real writer — formatted so applicant tracking
+        systems can read it correctly, with the keywords recruiters are screening for. Answer a
+        few guided questions, or upload your existing CV and we'll rework it for you.
+      </p>
+
+      <div class="mx-auto mt-8 grid max-w-lg grid-cols-1 gap-4 text-sm text-brand-dark sm:grid-cols-3">
+        <div>
+          <div class="text-brand-orange">&#9670; &#9670;</div>
+          <b>ATS-Optimized</b><br />built to get shortlisted
+        </div>
+        <div>
+          <div class="text-brand-orange">&#9670; &#9670;</div>
+          <b>Pay by M-Pesa</b><br />quick &amp; secure
+        </div>
+        <div>
+          <div class="text-brand-orange">&#9670; &#9670;</div>
+          <b>PDF or Word</b><br />delivered to you
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing tiers -->
+  <section class="relative overflow-hidden bg-white py-16">
+    <DiamondBackdrop variant="scatter" />
+    <div class="relative mx-auto max-w-7xl px-4 sm:px-6">
+      <div class="text-center">
+        <h2 class="text-2xl font-bold text-brand-dark sm:text-3xl">Elevate Your Global Career with Professional CV Packages</h2>
+        <p class="mt-2 text-sm text-slate-500">Every plan includes an ATS-optimized CV written by a real person — not a template generator.</p>
+        {template && (
+          <p class="mx-auto mt-4 max-w-md rounded-lg bg-brand-orange/10 px-4 py-2 text-sm font-semibold text-brand-orange">
+            Design selected: {template.title} — pick your plan below to continue
+          </p>
+        )}
+      </div>
+
+      <div class="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+        {CV_PRICING_TIERS.map((tier) => (
+          <div class={`card flex flex-col p-6 sm:p-8 ${tier.isFeatured ? 'border-brand-orange ring-1 ring-brand-orange/30' : ''}`}>
+            {tier.isFeatured && <span class="badge mb-3 self-start bg-brand-orange/10 text-brand-orange">Most Popular</span>}
+            <p class="text-xs font-bold uppercase tracking-wide text-slate-400">{tier.emoji} {tier.subtitle}</p>
+            <h3 class="mt-1 text-lg font-bold text-brand-dark">{tier.name}</h3>
+            <p class="mt-2 text-sm text-slate-500">{tier.tagline}</p>
+            <div class="mt-4" data-tier-price-block={tier.id} data-base-price={tier.priceKes}>
+              <p class="text-3xl font-extrabold text-brand-dark" data-price-display>KES {tier.priceKes.toLocaleString()}</p>
+              <p class="hidden text-xs font-semibold text-brand-orange" data-addon-note></p>
+            </div>
+            <p class="mt-1 text-xs text-slate-400">Delivery: {tier.deliveryTime}</p>
+
+            <ul class="mt-4 flex-1 space-y-2 text-xs text-slate-600 sm:text-sm">
+              {tier.includes.map((item) => <li>&#10003; {item}</li>)}
+            </ul>
+            <p class="mt-3 text-xs font-semibold text-brand-dark">{tier.revisionsText}</p>
+
+            <div class="mt-6 space-y-2">
+              <a href={`/cv-builder/wizard/?tier=${tier.id}`} data-tier={tier.id} data-link-kind="wizard" class="btn-primary block w-full text-center">
+                Answer a Few Questions
+              </a>
+              <a href={`/cv-builder/upload/?tier=${tier.id}`} data-tier={tier.id} data-link-kind="upload" class="btn-secondary block w-full text-center">
+                Upload My Existing CV
+              </a>
+              <a href="/cv-and-resume-services/" class="block w-full text-center text-sm font-semibold text-brand-orange hover:underline">
+                Check CV Designs &rarr;
+              </a>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <p class="mx-auto mt-6 max-w-2xl text-center text-xs text-slate-400">
+        Payment is by M-Pesa. Your details are only saved once payment is confirmed — nothing is
+        sent to our writers until then.
+      </p>
+    </div>
+  </section>
+
+  <!-- Add-ons / upgrades -->
+  <section class="relative overflow-hidden bg-cream py-16">
+    <div class="relative mx-auto max-w-3xl px-4 sm:px-6">
+      <div class="text-center">
+        <h2 class="text-2xl font-bold text-brand-dark sm:text-3xl">&#9889; Available Upgrades &amp; Add-ons</h2>
+        <p class="mt-2 text-sm text-slate-500">Optional — tick any that apply to any plan above. Your total updates automatically.</p>
+      </div>
+
+      <div class="card mt-8 divide-y divide-slate-100 p-2">
+        {CV_ADDONS.map((addon) => (
+          <label class="addon-label flex cursor-pointer items-start gap-3 rounded-lg p-4 transition-colors">
+            <input type="checkbox" class="addon-checkbox mt-1 h-4 w-4 rounded border-slate-300 text-brand-orange focus:ring-brand-orange" value={addon.id} />
+            <span class="flex-1">
+              <span class="flex flex-wrap items-center justify-between gap-2">
+                <span class="font-semibold text-brand-dark">{addon.name}</span>
+                <span class="font-bold text-brand-orange">+ KES {addon.priceKes.toLocaleString()}</span>
+              </span>
+              <span class="mt-1 block text-sm text-slate-500">{addon.description}</span>
+            </span>
+            <span class="addon-check hidden shrink-0 text-brand-green" aria-hidden="true">&#10003;</span>
+          </label>
+        ))}
+      </div>
+
+      <p id="addons-total" class="mt-4 text-center text-sm font-semibold text-brand-dark">No add-ons selected — tick a box above to add it to every plan's price</p>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="bg-cream py-16">
+    <div class="mx-auto max-w-5xl px-4 text-center sm:px-6">
+      <h2 class="text-2xl font-bold text-brand-dark sm:text-3xl">How It Works</h2>
+      <div class="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
+        {[
+          { step: 'Step 1', title: 'Tell Us About You', body: 'Answer a short set of guided questions, or upload your existing CV — whichever is easier.' },
+          { step: 'Step 2', title: 'Pay Securely by M-Pesa', body: "Choose your plan and pay with M-Pesa. We only receive your details once payment is confirmed." },
+          { step: 'Step 3', title: 'Get Your CV', body: 'A real writer prepares your ATS-optimized CV and delivers it to you as PDF (or PDF + Word, depending on plan).' },
+        ].map((s) => (
+          <div class="card p-6 text-left">
+            <p class="text-sm font-semibold text-brand-green-dark">{s.step}</p>
+            <h3 class="mt-2 text-lg font-bold text-brand-dark">{s.title}</h3>
+            <p class="mt-2 text-sm text-slate-600">{s.body}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="bg-white py-16">
+    <div class="mx-auto max-w-3xl px-4 sm:px-6">
+      <div class="text-center">
+        <h2 class="text-2xl font-bold text-brand-dark sm:text-3xl">Frequently Asked Questions</h2>
+        <p class="mt-1 text-slate-500">Everything about ATS optimization, our tiers, add-ons and how delivery works.</p>
+      </div>
+      <div class="mt-8 space-y-3">
+        {FAQS.map((f) => (
+          <details class="card group px-5 py-4">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4">
+              <h3 class="text-base font-semibold text-brand-dark">{f.q}</h3>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" class="shrink-0 text-brand-orange transition-transform group-open:rotate-180">
+                <path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+              </svg>
+            </summary>
+            <p class="mt-3 text-sm text-brand-dark/70">{f.a}</p>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <script define:vars={{ templateId, addonPrices: Object.fromEntries(CV_ADDONS.map((a) => [a.id, a.priceKes])) }}>
+    const addonCheckboxes = Array.from(document.querySelectorAll('.addon-checkbox'));
+    const totalEl = document.getElementById('addons-total');
+    const links = Array.from(document.querySelectorAll('[data-tier]'));
+    const priceBlocks = Array.from(document.querySelectorAll('[data-tier-price-block]'));
+
+    function selectedAddons() {
+      return addonCheckboxes.filter((cb) => cb.checked).map((cb) => cb.value);
+    }
+
+    function updateAll() {
+      const addons = selectedAddons();
+      const addonsTotal = addons.reduce((sum, id) => sum + (addonPrices[id] || 0), 0);
+
+      // 1. Rewrite every tier's CTA links so the addons carry through to the wizard/upload page.
+      links.forEach((el) => {
+        const params = new URLSearchParams();
+        params.set('tier', el.dataset.tier);
+        if (templateId) params.set('template', templateId);
+        if (addons.length) params.set('addons', addons.join(','));
+        el.href = `/cv-builder/${el.dataset.linkKind}/?${params.toString()}`;
+      });
+
+      // 2. Visibly update each plan's displayed price — this is the part that actually shows
+      // the checkbox did something, instead of only a small total line at the bottom.
+      priceBlocks.forEach((block) => {
+        const base = Number(block.dataset.basePrice);
+        const display = block.querySelector('[data-price-display]');
+        const note = block.querySelector('[data-addon-note]');
+        if (addonsTotal > 0) {
+          display.textContent = `KES ${(base + addonsTotal).toLocaleString()}`;
+          note.textContent = `KES ${base.toLocaleString()} + KES ${addonsTotal.toLocaleString()} add-ons`;
+          note.classList.remove('hidden');
+        } else {
+          display.textContent = `KES ${base.toLocaleString()}`;
+          note.classList.add('hidden');
+        }
+      });
+
+      // 3. Summary line + a visible checkmark/highlight on each ticked add-on row.
+      totalEl.textContent = addonsTotal > 0
+        ? `Add-ons selected: +KES ${addonsTotal.toLocaleString()} on every plan above`
+        : "No add-ons selected — tick a box above to add it to every plan's price";
+    }
+
+    addonCheckboxes.forEach((cb) => {
+      cb.addEventListener('change', () => {
+        const label = cb.closest('.addon-label');
+        label.classList.toggle('bg-brand-orange/5', cb.checked);
+        label.querySelector('.addon-check').classList.toggle('hidden', !cb.checked);
+        updateAll();
+      });
+    });
+    updateAll();
+  </script>
+</Layout>

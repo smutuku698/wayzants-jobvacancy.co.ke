@@ -9,6 +9,12 @@
       "bucket_name": "jobvacancy-images"
     }
   ],
+  "kv_namespaces": [
+    {
+      "binding": "CV_ORDER_DRAFTS",
+      "id": "42b621a062c6471bae711d019554709c"
+    }
+  ],
   "vars": {
     "PUBLIC_SITE_URL": "https://www.jobvacancy.co.ke",
     "PUBLIC_SUPABASE_URL": "https://awwdgptkywabywixhcry.supabase.co",

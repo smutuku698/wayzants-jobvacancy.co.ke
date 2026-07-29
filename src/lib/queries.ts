@@ -1,5 +1,5 @@
 import { getSupabase, getSupabaseAdmin } from './supabase';
-import type { Inquiry, InquiryType, Job, JobCategory, JobWithRelations, Location } from './types';
+import type { CvOrder, CvOrderStatus, Inquiry, InquiryType, Job, JobCategory, JobWithRelations, Location } from './types';
 
 const JOB_SELECT = '*, job_categories(*), locations(*)';
 const PAGE_SIZE = 20;
@@ -35,8 +35,9 @@ export async function getPopulatedCategories(excludeSlug: string, limit = 3): Pr
       .filter((c) => c.slug !== excludeSlug)
       .map(async (c) => {
         const { count } = await getSupabase()
-          .from('active_jobs')
+          .from('jobs')
           .select('id', { count: 'exact', head: true })
+          .eq('status', 'approved')
           .eq('category_id', c.id);
         return { category: c, count: count ?? 0 };
       })
@@ -101,8 +102,10 @@ export async function getApprovedJobs(filters: JobFilters = {}): Promise<JobList
   const locationId = filters.locationId ?? location?.id;
 
   let query = getSupabase()
-    .from('active_jobs')
+    .from('jobs')
     .select(JOB_SELECT, { count: 'exact' })
+    .eq('status', 'approved')
+    .or('expires_at.is.null,expires_at.gt.now()')
     .order('created_at', { ascending: false })
     .range(from, to);
 
@@ -129,10 +132,6 @@ export async function getApprovedJobs(filters: JobFilters = {}): Promise<JobList
   return { jobs, total: count ?? jobs.length, page, pageSize: PAGE_SIZE };
 }
 
-// Deliberately queries `jobs` directly (not the `active_jobs` view) and only
-// filters on status — an expired job must still be fetchable by slug so its
-// permalink can render a "closed" state instead of 404ing on anyone who
-// already has the URL bookmarked or indexed. See migration 0011.
 export async function getJobBySlug(slug: string): Promise<JobWithRelations | null> {
   const { data, error } = await getSupabase()
     .from('jobs')
@@ -146,8 +145,9 @@ export async function getJobBySlug(slug: string): Promise<JobWithRelations | nul
 
 export async function getRelatedJobs(job: JobWithRelations, limit = 4): Promise<JobWithRelations[]> {
   const { data, error } = await getSupabase()
-    .from('active_jobs')
+    .from('jobs')
     .select(JOB_SELECT)
+    .eq('status', 'approved')
     .eq('category_id', job.category_id)
     .neq('id', job.id)
     .order('created_at', { ascending: false })
@@ -158,8 +158,9 @@ export async function getRelatedJobs(job: JobWithRelations, limit = 4): Promise<
 
 export async function getLatestJobs(limit = 12): Promise<JobWithRelations[]> {
   const { data, error } = await getSupabase()
-    .from('active_jobs')
+    .from('jobs')
     .select(JOB_SELECT)
+    .eq('status', 'approved')
     .order('created_at', { ascending: false })
     .limit(limit);
   if (error) throw error;
@@ -176,8 +177,9 @@ export async function getLatestJobs(limit = 12): Promise<JobWithRelations[]> {
  */
 export async function getFeaturedJobs(limit = 6): Promise<JobWithRelations[]> {
   const { data: featuredData, error: featuredError } = await getSupabase()
-    .from('active_jobs')
+    .from('jobs')
     .select(JOB_SELECT)
+    .eq('status', 'approved')
     .eq('is_featured', true)
     .gt('featured_until', new Date().toISOString())
     .order('created_at', { ascending: false })
@@ -189,8 +191,9 @@ export async function getFeaturedJobs(limit = 6): Promise<JobWithRelations[]> {
 
   const excludeIds = featured.map((j) => j.id);
   let backfillQuery = getSupabase()
-    .from('active_jobs')
+    .from('jobs')
     .select(JOB_SELECT)
+    .eq('status', 'approved')
     .order('created_at', { ascending: false })
     .limit(limit - featured.length);
   if (excludeIds.length > 0) {
@@ -208,8 +211,9 @@ export async function getJobsByCategorySlug(categorySlug: string, limit = 6): Pr
   const category = await getCategoryBySlug(categorySlug);
   if (!category) return [];
   const { data, error } = await getSupabase()
-    .from('active_jobs')
+    .from('jobs')
     .select(JOB_SELECT)
+    .eq('status', 'approved')
     .eq('category_id', category.id)
     .order('created_at', { ascending: false })
     .limit(limit);
@@ -226,8 +230,9 @@ export async function getJobsByCategorySlug(categorySlug: string, limit = 6): Pr
  */
 export async function getLatestLocalJobs(limit = 6): Promise<JobWithRelations[]> {
   const { data, error } = await getSupabase()
-    .from('active_jobs')
+    .from('jobs')
     .select(JOB_SELECT)
+    .eq('status', 'approved')
     .eq('is_remote', false)
     .order('created_at', { ascending: false })
     .limit(limit);
@@ -395,5 +400,25 @@ export async function markInquiryRead(id: string): Promise<void> {
 
 export async function archiveInquiry(id: string): Promise<void> {
   const { error } = await getSupabaseAdmin().from('inquiries').update({ status: 'archived' }).eq('id', id);
+  if (error) throw error;
+}
+
+// ---------------------------------------------------------------------------
+// CV & Resume builder orders (/cv-builder/) — admin only, see lib/cv-orders.ts
+// for how rows get created (only after payment is confirmed).
+// ---------------------------------------------------------------------------
+
+export async function getCvOrders(status: CvOrderStatus): Promise<CvOrder[]> {
+  const { data, error } = await getSupabaseAdmin()
+    .from('cv_orders')
+    .select('*')
+    .eq('status', status)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function updateCvOrderStatus(id: string, status: CvOrderStatus): Promise<void> {
+  const { error } = await getSupabaseAdmin().from('cv_orders').update({ status }).eq('id', id);
   if (error) throw error;
 }

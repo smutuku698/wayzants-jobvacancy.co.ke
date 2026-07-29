@@ -5,7 +5,7 @@ import { SITE_URL } from '../lib/seo';
 
 export const prerender = false;
 
-const STATIC_PATHS = ['/', '/jobs/', '/post-a-job/', '/about/', '/contact/', '/faq/', '/scam-alert/', '/cv-and-resume-services/', '/sitemap/'];
+const STATIC_PATHS = ['/', '/jobs/', '/post-a-job/', '/about/', '/contact/', '/faq/', '/scam-alert/', '/cv-builder/', '/cv-and-resume-services/', '/sitemap/'];
 
 function urlEntry(loc: string, changefreq: string, priority: string, lastmod?: string) {
   return `<url><loc>${loc}</loc><changefreq>${changefreq}</changefreq><priority>${priority}</priority>${
@@ -41,13 +41,16 @@ export const GET: APIRoute = async () => {
     // eslint-disable-next-line no-constant-condition
     while (true) {
       const { data } = await getSupabase()
-        .from('active_jobs')
+        .from('jobs')
         .select('slug, created_at')
+        .eq('status', 'approved')
         .order('created_at', { ascending: false })
         .range(offset, offset + BATCH_SIZE - 1);
       if (!data || data.length === 0) break;
       for (const job of data) {
-        entries.push(urlEntry(`${SITE_URL}/jobs/${job.slug}/`, 'daily', '0.7', new Date(job.created_at).toISOString()));
+        // High priority so every job page gets crawled/indexed quickly —
+        // matches category/location pages rather than trailing behind them.
+        entries.push(urlEntry(`${SITE_URL}/jobs/${job.slug}/`, 'daily', '0.9', new Date(job.created_at).toISOString()));
       }
       if (data.length < BATCH_SIZE || entries.length >= MAX_JOB_URLS) break;
       offset += BATCH_SIZE;

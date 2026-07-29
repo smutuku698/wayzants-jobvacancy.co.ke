@@ -1,0 +1,549 @@
+---
+export const prerender = false;
+import Layout from '../../../layouts/Layout.astro';
+import Breadcrumbs from '../../../components/Breadcrumbs.astro';
+import DiamondBackdrop from '../../../components/cv-builder/DiamondBackdrop.astro';
+import { getPricingTier, resolveAddons, getAddon } from '../../../lib/cv-orders';
+import { CV_TEMPLATES } from '../../../lib/cv-templates';
+
+const tierId = Astro.url.searchParams.get('tier') ?? '';
+const tier = getPricingTier(tierId);
+
+if (!tier) {
+  return Astro.redirect('/cv-builder/');
+}
+
+const templateId = Astro.url.searchParams.get('template') ?? '';
+const template = CV_TEMPLATES.find((t) => t.id === templateId) ?? null;
+
+const addonsParam = Astro.url.searchParams.get('addons') ?? '';
+const { addons, addonsTotalKes } = resolveAddons(addonsParam.split(',').filter(Boolean));
+const totalKes = tier.priceKes + addonsTotalKes;
+
+const title = `Build Your CV — ${tier.name} | JobVacancy.co.ke`;
+const description = 'Answer a few guided questions and we\'ll write your ATS-optimized CV.';
+
+const STEPS = [
+  'Personal Details',
+  'Education',
+  'Work Experience',
+  'Skills',
+  'Certifications',
+  'Referees',
+  'Target Job',
+  'Review & Pay',
+];
+---
+
+<Layout title={title} description={description} path="/cv-builder/wizard/" noindex>
+  <Breadcrumbs items={[{ name: 'Home', href: '/' }, { name: 'CV & Resume Services', href: '/cv-builder/' }, { name: 'Answer Questions' }]} />
+
+  <section class="relative overflow-hidden bg-cream py-8">
+    <DiamondBackdrop variant="scatter" />
+    <div class="relative mx-auto max-w-3xl px-4 sm:px-6">
+      <div class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-white px-4 py-3 text-sm">
+        <span class="font-semibold text-brand-dark">
+          Plan: <span class="text-brand-orange">{tier.name}</span> — KES {tier.priceKes.toLocaleString()}
+          {template && <> &middot; Template: <span class="text-brand-orange">{template.title}</span></>}
+          {addons.length > 0 && (
+            <>
+              {' '}&middot; Add-ons: {addons.map((id) => getAddon(id)?.name).join(', ')} (+KES {addonsTotalKes.toLocaleString()})
+            </>
+          )}
+          {addons.length > 0 && <> &middot; <b>Total: KES {totalKes.toLocaleString()}</b></>}
+        </span>
+        <a href="/cv-builder/" class="font-semibold text-brand-orange hover:underline">Change plan</a>
+      </div>
+
+      <!-- Progress -->
+      <div class="mt-6 flex items-center justify-between gap-1" id="progress-dots">
+        {STEPS.map((label, i) => (
+          <button
+            type="button"
+            class="step-dot group flex flex-1 flex-col items-center gap-1.5 text-center"
+            data-step-target={i + 1}
+            aria-label={`Go to step ${i + 1}: ${label}`}
+          >
+            <span class="dot-circle flex h-7 w-7 items-center justify-center rounded-full border-2 border-slate-300 bg-white text-xs font-bold text-slate-400">
+              {i + 1}
+            </span>
+            <span class="hidden text-[10px] font-medium text-slate-400 sm:block">{label}</span>
+          </button>
+        ))}
+      </div>
+
+      <p id="draft-restored-note" class="mt-4 hidden rounded-lg bg-brand-green/10 px-4 py-2 text-sm text-brand-green-dark">
+        We restored your answers from where you left off. <button type="button" id="clear-draft-btn" class="font-semibold underline">Start over instead</button>
+      </p>
+
+      <form id="cv-wizard-form" class="card mt-4 p-6 sm:p-8">
+        <!-- Step 1: Personal -->
+        <section class="wizard-step" data-step="1">
+          <h2 class="text-lg font-bold text-brand-dark">Personal Details</h2>
+          <p class="mt-1 text-sm text-slate-500">The basics we need to reach you and start your CV.</p>
+          <div class="mt-5 space-y-4">
+            <div>
+              <label class="mb-1.5 block text-sm font-semibold text-brand-dark">Full Name *</label>
+              <input data-field="full_name" required maxlength="150" type="text" placeholder="e.g. Jane Wanjiku Mwangi" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+            </div>
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label class="mb-1.5 block text-sm font-semibold text-brand-dark">Phone Number *</label>
+                <input data-field="phone" required type="tel" inputmode="tel" placeholder="e.g. 0722 123 456" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+              </div>
+              <div>
+                <label class="mb-1.5 block text-sm font-semibold text-brand-dark">Email Address *</label>
+                <input data-field="email" required type="email" placeholder="e.g. jane.wanjiku@gmail.com" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+              </div>
+            </div>
+            <div>
+              <label class="mb-1.5 block text-sm font-semibold text-brand-dark">Location</label>
+              <input data-field="location" type="text" placeholder="e.g. Nairobi, Kenya" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+            </div>
+            <div>
+              <label class="mb-1.5 block text-sm font-semibold text-brand-dark">Professional Title</label>
+              <input data-field="professional_title" type="text" placeholder="e.g. Sales Executive, Accountant, Recent Graduate" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+              <p class="mt-1 text-xs text-slate-500">Not sure? Leave it blank — we'll suggest one based on your experience.</p>
+            </div>
+            <div>
+              <label class="mb-1.5 block text-sm font-semibold text-brand-dark">Career Summary (optional)</label>
+              <textarea data-field="summary" rows="4" placeholder="e.g. A few lines about your experience and what you're looking for — this is optional, our writers can draft this for you." class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange"></textarea>
+              <p class="mt-1 text-xs text-slate-500">Not sure what to write? Leave this blank — our writers will draft one tailored to your target job title.</p>
+            </div>
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label class="mb-1.5 block text-sm font-semibold text-brand-dark">LinkedIn Profile (optional)</label>
+                <input data-field="linkedin_url" type="url" placeholder="e.g. linkedin.com/in/janewanjiku" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+              </div>
+              <div>
+                <label class="mb-1.5 block text-sm font-semibold text-brand-dark">Website / Portfolio Link (optional)</label>
+                <input data-field="portfolio_url" type="url" placeholder="e.g. your personal site or project portfolio link" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Step 2: Education -->
+        <section class="wizard-step hidden" data-step="2">
+          <h2 class="text-lg font-bold text-brand-dark">Education</h2>
+          <p class="mt-1 text-sm text-slate-500">Add as many as apply — all optional, add another for each qualification.</p>
+          <div class="repeat-list mt-5 space-y-4" data-list="education"></div>
+          <button type="button" class="add-row-btn btn-secondary mt-4 !py-2 text-sm" data-template="education-row-template" data-list="education">+ Add Another Education</button>
+        </section>
+
+        <!-- Step 3: Work Experience -->
+        <section class="wizard-step hidden" data-step="3">
+          <h2 class="text-lg font-bold text-brand-dark">Work Experience</h2>
+          <p class="mt-1 text-sm text-slate-500">Add as many as apply — all optional, add another for each job.</p>
+          <div class="repeat-list mt-5 space-y-4" data-list="experience"></div>
+          <button type="button" class="add-row-btn btn-secondary mt-4 !py-2 text-sm" data-template="experience-row-template" data-list="experience">+ Add Another Job</button>
+        </section>
+
+        <!-- Step 4: Skills -->
+        <section class="wizard-step hidden" data-step="4">
+          <h2 class="text-lg font-bold text-brand-dark">Skills</h2>
+          <p class="mt-1 text-sm text-slate-500">Optional — list what comes to mind, separated by commas.</p>
+          <div class="mt-5">
+            <label class="mb-1.5 block text-sm font-semibold text-brand-dark">Skills</label>
+            <textarea data-field="skills" rows="3" placeholder="e.g. Customer service, Microsoft Excel, Team leadership, Report writing" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange"></textarea>
+            <p class="mt-1 text-xs text-slate-500">
+              Not sure what counts as a skill, or what to include? Just list whatever you can think of — our
+              writers will refine and tailor the final list to match the job title you're applying for.
+            </p>
+          </div>
+        </section>
+
+        <!-- Step 5: Certifications -->
+        <section class="wizard-step hidden" data-step="5">
+          <h2 class="text-lg font-bold text-brand-dark">Certifications &amp; Training</h2>
+          <p class="mt-1 text-sm text-slate-500">Optional — courses, certifications or training you've completed.</p>
+          <div class="repeat-list mt-5 space-y-4" data-list="certifications"></div>
+          <button type="button" class="add-row-btn btn-secondary mt-4 !py-2 text-sm" data-template="certification-row-template" data-list="certifications">+ Add Another Certification</button>
+        </section>
+
+        <!-- Step 6: Referees -->
+        <section class="wizard-step hidden" data-step="6">
+          <h2 class="text-lg font-bold text-brand-dark">Referees</h2>
+          <p class="mt-1 text-sm text-slate-500">Optional — people who can vouch for your work. You can also just say "Available on request".</p>
+          <div class="repeat-list mt-5 space-y-4" data-list="referees"></div>
+          <button type="button" class="add-row-btn btn-secondary mt-4 !py-2 text-sm" data-template="referee-row-template" data-list="referees">+ Add Another Referee</button>
+        </section>
+
+        <!-- Step 7: Target job -->
+        <section class="wizard-step hidden" data-step="7">
+          <h2 class="text-lg font-bold text-brand-dark">Target Job</h2>
+          <p class="mt-1 text-sm text-slate-500">Optional, but recommended — helps us tailor your CV precisely to the job you want.</p>
+          <div class="mt-5">
+            <label class="mb-1.5 block text-sm font-semibold text-brand-dark">Job link or description</label>
+            <textarea data-field="target_job" rows="4" placeholder="e.g. Paste the job advert link, or describe the role/industry you're applying to" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange"></textarea>
+          </div>
+        </section>
+
+        <!-- Step 8: Review & pay -->
+        <section class="wizard-step hidden" data-step="8">
+          <h2 class="text-lg font-bold text-brand-dark">Review &amp; Pay</h2>
+          <p class="mt-1 text-sm text-slate-500">Check everything below, then pay to submit — nothing is saved until payment is confirmed.</p>
+          <div id="review-summary" class="mt-5 space-y-5"></div>
+
+          <div class="mt-6 border-t border-slate-100 pt-6">
+            <label class="mb-1.5 block text-sm font-semibold text-brand-dark">M-Pesa Phone Number *</label>
+            <input id="mpesa-phone" required type="tel" inputmode="tel" placeholder="e.g. 0722 123 456" class="w-full max-w-xs rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
+            <p id="mpesa-phone-error" class="mt-1 hidden text-xs text-red-600">Enter a valid Safaricom/Airtel number.</p>
+          </div>
+          <p id="submit-error" class="mt-3 hidden rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"></p>
+        </section>
+
+        <!-- Nav buttons -->
+        <div class="mt-8 flex items-center justify-between border-t border-slate-100 pt-6">
+          <button type="button" id="wizard-back-btn" class="btn-secondary" disabled>Back</button>
+          <button type="button" id="wizard-next-btn" class="btn-primary">Next</button>
+          <button type="button" id="wizard-pay-btn" class="btn-primary hidden">
+            Pay KES {totalKes.toLocaleString()} &amp; Submit
+          </button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- Row templates (cloned by JS, never rendered directly) -->
+  <template id="education-row-template">
+    <div class="repeat-row card space-y-3 p-4">
+      <div class="flex items-center justify-between">
+        <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Education</p>
+        <button type="button" class="remove-row-btn text-xs font-semibold text-red-500 hover:underline">Remove</button>
+      </div>
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <input data-field="institution" type="text" placeholder="e.g. University of Nairobi" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-orange" />
+        <input data-field="qualification" type="text" placeholder="e.g. Bachelor of Commerce" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-orange" />
+      </div>
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <input data-field="field" type="text" placeholder="Field of study, e.g. Finance" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-orange sm:col-span-1" />
+        <input data-field="start_year" type="text" placeholder="Start year, e.g. 2018" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-orange" />
+        <input data-field="end_year" type="text" placeholder="End year, e.g. 2022" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-orange" />
+      </div>
+    </div>
+  </template>
+
+  <template id="experience-row-template">
+    <div class="repeat-row card space-y-3 p-4">
+      <div class="flex items-center justify-between">
+        <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Work Experience</p>
+        <button type="button" class="remove-row-btn text-xs font-semibold text-red-500 hover:underline">Remove</button>
+      </div>
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <input data-field="employer" type="text" placeholder="e.g. Kenya Red Cross Society" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-orange" />
+        <input data-field="title" type="text" placeholder="e.g. Programme Officer" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-orange" />
+      </div>
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <input data-field="start_date" type="text" placeholder="Start, e.g. Jan 2021" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-orange" />
+        <input data-field="end_date" type="text" placeholder="End, e.g. Present" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-orange" />
+      </div>
+      <label class="flex items-center gap-2 text-sm text-brand-dark">
+        <input data-field="is_current" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-brand-orange focus:ring-brand-orange" />
+        I currently work here
+      </label>
+      <div>
+        <textarea data-field="responsibilities" rows="3" placeholder="e.g. What you did day-to-day — a few bullet points or even rough notes are fine" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-orange"></textarea>
+        <p class="mt-1 text-xs text-slate-500">Not sure how to phrase this? Just note down what you did — we'll rewrite it professionally for your target job title.</p>
+      </div>
+    </div>
+  </template>
+
+  <template id="certification-row-template">
+    <div class="repeat-row card space-y-3 p-4">
+      <div class="flex items-center justify-between">
+        <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Certification</p>
+        <button type="button" class="remove-row-btn text-xs font-semibold text-red-500 hover:underline">Remove</button>
+      </div>
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <input data-field="name" type="text" placeholder="e.g. Project Management Professional" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-orange sm:col-span-1" />
+        <input data-field="issuer" type="text" placeholder="Issued by, e.g. PMI" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-orange" />
+        <input data-field="year" type="text" placeholder="Year, e.g. 2023" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-orange" />
+      </div>
+    </div>
+  </template>
+
+  <template id="referee-row-template">
+    <div class="repeat-row card space-y-3 p-4">
+      <div class="flex items-center justify-between">
+        <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Referee</p>
+        <button type="button" class="remove-row-btn text-xs font-semibold text-red-500 hover:underline">Remove</button>
+      </div>
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <input data-field="name" type="text" placeholder="e.g. John Otieno" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-orange" />
+        <input data-field="relationship" type="text" placeholder="e.g. Former Supervisor" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-orange" />
+      </div>
+      <input data-field="organization" type="text" placeholder="Organisation, e.g. Kenya Red Cross Society" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-orange" />
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <input data-field="phone" type="tel" placeholder="Phone, e.g. 0722 123 456" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-orange" />
+        <input data-field="email" type="email" placeholder="Email (optional)" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-orange" />
+      </div>
+    </div>
+  </template>
+
+  <script define:vars={{ tierId: tier.id, templateId: template?.id ?? '', addonsCsv: addons.join(','), stepLabels: STEPS }}>
+    const TOTAL_STEPS = stepLabels.length;
+    const DRAFT_KEY = 'jv-cv-wizard-draft-v1';
+    const KE_PHONE_RE = /^(?:\+?254|0)([17]\d{8})$/;
+
+    const form = document.getElementById('cv-wizard-form');
+    const steps = Array.from(document.querySelectorAll('.wizard-step'));
+    const dots = Array.from(document.querySelectorAll('.step-dot'));
+    const backBtn = document.getElementById('wizard-back-btn');
+    const nextBtn = document.getElementById('wizard-next-btn');
+    const payBtn = document.getElementById('wizard-pay-btn');
+
+    let currentStep = 1;
+
+    function fieldsIn(container) {
+      return Array.from(container.querySelectorAll('[data-field]'));
+    }
+
+    function setStep(n) {
+      currentStep = Math.min(Math.max(n, 1), TOTAL_STEPS);
+      steps.forEach((s) => s.classList.toggle('hidden', Number(s.dataset.step) !== currentStep));
+      dots.forEach((d) => {
+        const target = Number(d.dataset.stepTarget);
+        const circle = d.querySelector('.dot-circle');
+        circle.classList.remove('bg-brand-orange', 'border-brand-orange', 'text-white', 'bg-brand-green', 'border-brand-green');
+        if (target === currentStep) {
+          circle.classList.add('bg-brand-orange', 'border-brand-orange', 'text-white');
+        } else if (target < currentStep) {
+          circle.classList.add('bg-brand-green', 'border-brand-green', 'text-white');
+        } else {
+          circle.classList.add('border-slate-300');
+        }
+      });
+      backBtn.disabled = currentStep === 1;
+      nextBtn.classList.toggle('hidden', currentStep === TOTAL_STEPS);
+      payBtn.classList.toggle('hidden', currentStep !== TOTAL_STEPS);
+      if (currentStep === TOTAL_STEPS) renderReview();
+      window.scrollTo({ top: form.offsetTop - 100, behavior: 'smooth' });
+    }
+
+    function validateStep(stepEl) {
+      const required = Array.from(stepEl.querySelectorAll('[required]'));
+      for (const el of required) {
+        if (!el.value.trim()) {
+          el.reportValidity();
+          return false;
+        }
+        if (el.type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(el.value)) {
+          el.reportValidity();
+          return false;
+        }
+      }
+      return true;
+    }
+
+    nextBtn.addEventListener('click', () => {
+      const stepEl = steps.find((s) => Number(s.dataset.step) === currentStep);
+      if (!validateStep(stepEl)) return;
+      setStep(currentStep + 1);
+      saveDraft();
+    });
+    backBtn.addEventListener('click', () => setStep(currentStep - 1));
+    dots.forEach((d) => d.addEventListener('click', () => setStep(Number(d.dataset.stepTarget))));
+
+    // --- Repeatable rows -------------------------------------------------
+    function addRow(templateId, listName, values) {
+      const tpl = document.getElementById(templateId);
+      const list = document.querySelector(`.repeat-list[data-list="${listName}"]`);
+      const node = tpl.content.firstElementChild.cloneNode(true);
+      if (values) {
+        fieldsIn(node).forEach((el) => {
+          const v = values[el.dataset.field];
+          if (v === undefined) return;
+          if (el.type === 'checkbox') el.checked = !!v;
+          else el.value = v;
+        });
+      }
+      node.querySelector('.remove-row-btn').addEventListener('click', () => {
+        node.remove();
+        saveDraft();
+      });
+      list.appendChild(node);
+      return node;
+    }
+
+    document.querySelectorAll('.add-row-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        addRow(btn.dataset.template, btn.dataset.list, null);
+        saveDraft();
+      });
+    });
+
+    function readList(listName) {
+      const list = document.querySelector(`.repeat-list[data-list="${listName}"]`);
+      return Array.from(list.querySelectorAll('.repeat-row')).map((row) => {
+        const entry = {};
+        fieldsIn(row).forEach((el) => {
+          entry[el.dataset.field] = el.type === 'checkbox' ? el.checked : el.value.trim();
+        });
+        return entry;
+      });
+    }
+
+    // --- Collect / restore whole form -------------------------------------
+    function collect() {
+      const personalStep = steps.find((s) => s.dataset.step === '1');
+      const personal = {};
+      fieldsIn(personalStep).forEach((el) => { personal[el.dataset.field] = el.value.trim(); });
+
+      const skillsRaw = document.querySelector('[data-field="skills"]').value;
+      const skills = skillsRaw.split(',').map((s) => s.trim()).filter(Boolean);
+
+      const target_job = document.querySelector('[data-field="target_job"]').value.trim();
+
+      return {
+        personal,
+        education: readList('education'),
+        experience: readList('experience'),
+        skills,
+        certifications: readList('certifications'),
+        referees: readList('referees'),
+        target_job,
+      };
+    }
+
+    function saveDraft() {
+      try {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({ tierId, data: collect(), step: currentStep }));
+      } catch {
+        // localStorage unavailable (private mode etc.) — draft simply won't persist.
+      }
+    }
+
+    function restoreDraft() {
+      let raw;
+      try {
+        raw = localStorage.getItem(DRAFT_KEY);
+      } catch {
+        return;
+      }
+      if (!raw) return;
+      let saved;
+      try {
+        saved = JSON.parse(raw);
+      } catch {
+        return;
+      }
+      if (!saved?.data) return;
+
+      const d = saved.data;
+      const personalStep = steps.find((s) => s.dataset.step === '1');
+      fieldsIn(personalStep).forEach((el) => {
+        if (d.personal?.[el.dataset.field] !== undefined) el.value = d.personal[el.dataset.field];
+      });
+      document.querySelector('[data-field="skills"]').value = (d.skills || []).join(', ');
+      document.querySelector('[data-field="target_job"]').value = d.target_job || '';
+
+      (d.education || []).forEach((e) => addRow('education-row-template', 'education', e));
+      (d.experience || []).forEach((e) => addRow('experience-row-template', 'experience', e));
+      (d.certifications || []).forEach((e) => addRow('certification-row-template', 'certifications', e));
+      (d.referees || []).forEach((e) => addRow('referee-row-template', 'referees', e));
+
+      document.getElementById('draft-restored-note').classList.remove('hidden');
+      setStep(saved.step || 1);
+    }
+
+    document.getElementById('clear-draft-btn')?.addEventListener('click', () => {
+      try { localStorage.removeItem(DRAFT_KEY); } catch {}
+      window.location.reload();
+    });
+
+    // Autosave on any input change.
+    form.addEventListener('input', () => saveDraft());
+
+    // --- Review ------------------------------------------------------------
+    function renderReview() {
+      const d = collect();
+      const box = document.getElementById('review-summary');
+      const section = (title, stepNum, bodyHtml) => `
+        <div class="rounded-lg border border-slate-200 p-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold uppercase tracking-wide text-slate-500">${title}</h3>
+            <button type="button" class="review-edit-btn text-xs font-semibold text-brand-orange hover:underline" data-step-target="${stepNum}">Edit</button>
+          </div>
+          <div class="mt-2 text-sm text-brand-dark/80">${bodyHtml || '<span class="text-slate-400">Not provided</span>'}</div>
+        </div>`;
+
+      const esc = (s) => String(s ?? '').replace(/</g, '&lt;');
+
+      box.innerHTML = [
+        section('Personal Details', 1, `
+          <p><b>${esc(d.personal.full_name)}</b> — ${esc(d.personal.professional_title)}</p>
+          <p>${esc(d.personal.phone)} &middot; ${esc(d.personal.email)} &middot; ${esc(d.personal.location)}</p>
+          ${d.personal.summary ? `<p class="mt-1 italic">${esc(d.personal.summary)}</p>` : ''}
+          ${d.personal.linkedin_url ? `<p class="mt-1">LinkedIn: ${esc(d.personal.linkedin_url)}</p>` : ''}
+          ${d.personal.portfolio_url ? `<p>Portfolio: ${esc(d.personal.portfolio_url)}</p>` : ''}
+        `),
+        section('Education', 2, d.education.map((e) => `<p>${esc(e.qualification)} — ${esc(e.institution)} (${esc(e.start_year)}–${esc(e.end_year)})</p>`).join('')),
+        section('Work Experience', 3, d.experience.map((e) => `<p>${esc(e.title)} at ${esc(e.employer)} (${esc(e.start_date)}–${e.is_current ? 'Present' : esc(e.end_date)})</p>`).join('')),
+        section('Skills', 4, d.skills.map(esc).join(', ')),
+        section('Certifications', 5, d.certifications.map((e) => `<p>${esc(e.name)} — ${esc(e.issuer)} (${esc(e.year)})</p>`).join('')),
+        section('Referees', 6, d.referees.map((e) => `<p>${esc(e.name)} — ${esc(e.relationship)}, ${esc(e.organization)}</p>`).join('')),
+        section('Target Job', 7, d.target_job ? `<p>${esc(d.target_job)}</p>` : ''),
+      ].join('');
+
+      box.querySelectorAll('.review-edit-btn').forEach((btn) => {
+        btn.addEventListener('click', () => setStep(Number(btn.dataset.stepTarget)));
+      });
+    }
+
+    // --- Submit / pay --------------------------------------------------
+    const mpesaInput = document.getElementById('mpesa-phone');
+    const mpesaError = document.getElementById('mpesa-phone-error');
+    const submitError = document.getElementById('submit-error');
+
+    payBtn.addEventListener('click', async () => {
+      const digits = mpesaInput.value.replace(/[^\d+]/g, '');
+      if (!KE_PHONE_RE.test(digits)) {
+        mpesaError.classList.remove('hidden');
+        return;
+      }
+      mpesaError.classList.add('hidden');
+      submitError.classList.add('hidden');
+
+      const personal = collect().personal;
+      if (!personal.full_name || !personal.phone || !personal.email) {
+        submitError.textContent = 'Please fill in your name, phone and email on Step 1 before paying.';
+        submitError.classList.remove('hidden');
+        setStep(1);
+        return;
+      }
+
+      payBtn.disabled = true;
+      payBtn.textContent = 'Starting payment…';
+
+      const cvData = collect();
+      const fd = new FormData();
+      fd.set('path_type', 'form');
+      fd.set('tier', tierId);
+      fd.set('template_id', templateId);
+      fd.set('addons', addonsCsv);
+      fd.set('contact_name', personal.full_name);
+      fd.set('contact_phone', personal.phone);
+      fd.set('contact_email', personal.email);
+      fd.set('target_job', cvData.target_job || '');
+      fd.set('cv_data', JSON.stringify(cvData));
+      fd.set('payment_phone', digits);
+
+      try {
+        const res = await fetch('/api/cv-orders/stage/', { method: 'POST', body: fd });
+        const body = await res.json();
+        if (!res.ok || !body.ok) throw new Error(body.error || 'Could not start payment.');
+        try { localStorage.removeItem(DRAFT_KEY); } catch {}
+        window.location.href = body.redirect;
+      } catch (err) {
+        submitError.textContent = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
+        submitError.classList.remove('hidden');
+        payBtn.disabled = false;
+        payBtn.textContent = `Pay & Submit`;
+      }
+    });
+
+    restoreDraft();
+    setStep(currentStep);
+  </script>
+</Layout>

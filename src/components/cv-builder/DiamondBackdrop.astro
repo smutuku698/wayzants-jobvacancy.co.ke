@@ -1,0 +1,42 @@
+---
+/**
+ * Decorative diamond motif reused from the homepage hero (rotate-45 squares in the brand
+ * palette), but with no photos — this project's CV-builder pages are new/isolated (see
+ * feedback-never-touch-jobboard-design) and were explicitly asked to reuse the diamond shapes
+ * "in the same colors" without images. Always `pointer-events-none` and behind content
+ * (`-z-10` inside a `relative` parent) so it never sits above readable text or inputs.
+ *
+ * variant="hero"    — two side gutters of larger diamonds, like the homepage hero. Hidden below
+ *                      md so it never competes with content on mobile.
+ * variant="scatter" — a low-opacity full-width scatter, safe to place behind any section
+ *                      (including ones with text/forms) at any viewport width.
+ */
+interface Props {
+  variant?: 'hero' | 'scatter';
+}
+const { variant = 'scatter' } = Astro.props;
+---
+
+{variant === 'hero' ? (
+  <div class="pointer-events-none absolute inset-0 -z-10 hidden md:block" aria-hidden="true">
+    <div class="absolute left-4 top-6 h-16 w-16 rotate-45 bg-brand-orange/90"></div>
+    <div class="absolute left-24 top-28 h-10 w-10 rotate-45 bg-brand-green/80"></div>
+    <div class="absolute left-10 top-56 h-8 w-8 rotate-45 bg-brand-yellow/90"></div>
+    <div class="absolute left-32 top-72 h-20 w-20 rotate-45 bg-brand-orange/20"></div>
+
+    <div class="absolute right-6 top-10 h-20 w-20 rotate-45 bg-brand-green/85"></div>
+    <div class="absolute right-28 top-40 h-12 w-12 rotate-45 bg-brand-orange/80"></div>
+    <div class="absolute right-10 top-64 h-10 w-10 rotate-45 bg-brand-yellow/90"></div>
+    <div class="absolute right-36 top-8 h-24 w-24 rotate-45 bg-brand-green/15"></div>
+  </div>
+) : (
+  <div class="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
+    <div class="absolute -left-6 top-4 h-14 w-14 rotate-45 bg-brand-orange/10"></div>
+    <div class="absolute left-[12%] top-24 h-8 w-8 rotate-45 bg-brand-green/10"></div>
+    <div class="absolute left-[28%] -top-4 h-10 w-10 rotate-45 bg-brand-yellow/15"></div>
+    <div class="absolute left-1/2 top-16 h-6 w-6 rotate-45 bg-brand-orange/10"></div>
+    <div class="absolute right-[22%] top-6 h-12 w-12 rotate-45 bg-brand-green/10"></div>
+    <div class="absolute right-[8%] top-28 h-9 w-9 rotate-45 bg-brand-yellow/15"></div>
+    <div class="absolute -right-8 top-2 h-16 w-16 rotate-45 bg-brand-orange/10"></div>
+  </div>
+)}
