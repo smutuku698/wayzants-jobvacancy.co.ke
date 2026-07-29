@@ -63,6 +63,7 @@ import { TOP_NAV_CATEGORIES, TOP_NAV_LOCATIONS } from '../lib/taxonomy';
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="hidden group-open:block"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>
       </summary>
       <div class="absolute inset-x-0 top-full border-t border-white/10 bg-brand-dark px-4 pb-4 lg:hidden">
+        <a href="/post-a-job/" class="btn-primary mt-3 w-full !py-2.5 text-sm">Post a Job</a>
         <p class="mt-3 mb-1 text-xs font-semibold uppercase tracking-wide text-white/50">Categories</p>
         {TOP_NAV_CATEGORIES.map((c) => (
           <a href={`/category/${c.slug}/`} class="block rounded-md px-2 py-2 text-sm text-white/90 hover:bg-white/10">{c.name}</a>
@@ -75,7 +76,6 @@ import { TOP_NAV_CATEGORIES, TOP_NAV_LOCATIONS } from '../lib/taxonomy';
         <a href="/location/international-remote/" class="block rounded-md px-2 py-2 text-sm text-white/90 hover:bg-white/10">International Jobs</a>
         <a href="/jobs/" class="block rounded-md px-2 py-2 text-sm text-white/90 hover:bg-white/10">All Jobs</a>
         <a href="/cv-and-resume-services/" class="block rounded-md px-2 py-2 text-sm text-white/90 hover:bg-white/10">CV &amp; Resume Services</a>
-        <a href="/post-a-job/" class="btn-primary mt-3 w-full !py-2.5 text-sm">Post a Job</a>
       </div>
     </details>
   </div>
