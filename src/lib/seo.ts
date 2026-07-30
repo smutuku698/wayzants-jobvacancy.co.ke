@@ -87,6 +87,91 @@ export function breadcrumbJsonLd(items: { name: string; url: string }[]) {
   };
 }
 
+// cruise-ship-jobs and teaching-jobs-abroad are physical, in-person placements
+// (onboard a ship / at a specific overseas school) — not telecommute — but
+// both are stored with is_remote=true purely because the DB's location
+// taxonomy has no "physical location outside Kenya" option yet, only
+// Kenya-physical/Kenya-remote/international-remote (see `locations` table
+// seed in 0001_init.sql and the `international_must_be_remote` check
+// constraint). Using job.is_remote alone for jobLocationType would falsely
+// label these as TELECOMMUTE, which Google's structured-data guidelines
+// specifically warn against for jobs that actually require physical presence
+// at a real (if varying) location.
+const ABROAD_PHYSICAL_CATEGORY_SLUGS = new Set(['cruise-ship-jobs', 'teaching-jobs-abroad']);
+
+// Best-effort country lookup from a job's own title/description text, so
+// abroad-physical jobs get a real jobLocation instead of a false TELECOMMUTE
+// label. City-level aliases are listed first (more specific/reliable than a
+// bare country name) and resolve to both a locality and a country.
+const CITY_ALIASES: [RegExp, { locality: string; country: string }][] = [
+  [/\bAbu Dhabi\b/i, { locality: 'Abu Dhabi', country: 'AE' }],
+  [/\bDubai\b/i, { locality: 'Dubai', country: 'AE' }],
+  [/\bDoha\b/i, { locality: 'Doha', country: 'QA' }],
+  [/\bHong Kong\b/i, { locality: 'Hong Kong', country: 'HK' }],
+];
+
+const COUNTRY_ALIASES: [RegExp, string][] = [
+  [/\bQatar\b/i, 'QA'],
+  [/\bUnited Arab Emirates\b|\bUAE\b/i, 'AE'],
+  [/\bSaudi Arabia\b/i, 'SA'],
+  [/\bKuwait\b/i, 'KW'],
+  [/\bBahrain\b/i, 'BH'],
+  [/\bOman\b/i, 'OM'],
+  [/\bSingapore\b/i, 'SG'],
+  [/\bVietnam\b/i, 'VN'],
+  [/\bThailand\b/i, 'TH'],
+  [/\bMalaysia\b/i, 'MY'],
+  [/\bIndonesia\b/i, 'ID'],
+  [/\bEgypt\b/i, 'EG'],
+  [/\bPortugal\b/i, 'PT'],
+  [/\bSpain\b/i, 'ES'],
+  [/\bFrance\b/i, 'FR'],
+  [/\bGermany\b/i, 'DE'],
+  [/\bItaly\b/i, 'IT'],
+  [/\bNetherlands\b/i, 'NL'],
+  [/\bSwitzerland\b/i, 'CH'],
+  [/\bChina\b/i, 'CN'],
+  [/\bBrazil\b/i, 'BR'],
+  [/\bTurkey\b/i, 'TR'],
+  [/\bNigeria\b/i, 'NG'],
+  [/\bSouth Africa\b/i, 'ZA'],
+  [/\bIndia\b/i, 'IN'],
+  [/\bJapan\b/i, 'JP'],
+  [/\bSouth Korea\b/i, 'KR'],
+  [/\bPhilippines\b/i, 'PH'],
+  [/\bJordan\b/i, 'JO'],
+  [/\bLebanon\b/i, 'LB'],
+  [/\bMorocco\b/i, 'MA'],
+  [/\bRwanda\b/i, 'RW'],
+  [/\bTanzania\b/i, 'TZ'],
+  [/\bUganda\b/i, 'UG'],
+  [/\bEthiopia\b/i, 'ET'],
+];
+
+/**
+ * "UK curriculum"/"US curriculum" is a very common phrase in these listings
+ * (describing which school syllabus is taught) and would otherwise falsely
+ * match GB/US as the job's actual location — stripped before matching.
+ */
+function stripCurriculumMentions(text: string): string {
+  return text.replace(/\b(UK|US|American|British)\s+curriculum/gi, '');
+}
+
+function guessAbroadLocation(job: JobWithRelations): { locality?: string; country: string } | null {
+  const title = job.title ?? '';
+  const description = stripCurriculumMentions(job.description ?? '');
+
+  for (const source of [title, description]) {
+    for (const [pattern, loc] of CITY_ALIASES) {
+      if (pattern.test(source)) return loc;
+    }
+    for (const [pattern, country] of COUNTRY_ALIASES) {
+      if (pattern.test(source)) return { country };
+    }
+  }
+  return null;
+}
+
 export function jobPostingJsonLd(job: JobWithRelations) {
   const json: Record<string, unknown> = {
     '@context': 'https://schema.org',
@@ -116,14 +201,29 @@ export function jobPostingJsonLd(job: JobWithRelations) {
   // spammy to Google without ever having to take anything off the site.
   json.validThrough = new Date(new Date(job.created_at).getTime() + 90 * 24 * 60 * 60 * 1000).toISOString();
 
-  if (job.is_remote) {
+  if (ABROAD_PHYSICAL_CATEGORY_SLUGS.has(job.job_categories?.slug ?? '')) {
+    // Physical placement outside Kenya (cruise ship / overseas school), not
+    // telecommute — give it a real jobLocation when a country can be
+    // determined from the job's own text, and omit both jobLocation and
+    // jobLocationType otherwise rather than asserting an incorrect one.
+    const location = guessAbroadLocation(job);
+    if (location) {
+      json.jobLocation = {
+        '@type': 'Place',
+        address: {
+          '@type': 'PostalAddress',
+          ...(location.locality ? { addressLocality: location.locality } : {}),
+          addressCountry: location.country,
+        },
+      };
+    }
+  } else if (job.is_remote) {
     json.jobLocationType = 'TELECOMMUTE';
     json.applicantLocationRequirements = {
       '@type': 'Country',
       name: 'KE',
     };
-  }
-  if (!job.is_remote || !job.is_international) {
+  } else {
     json.jobLocation = {
       '@type': 'Place',
       address: {
