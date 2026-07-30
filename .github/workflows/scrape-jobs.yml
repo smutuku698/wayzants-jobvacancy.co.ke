@@ -22,9 +22,6 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
-          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   scrape-ngo:
     runs-on: ubuntu-latest
@@ -42,9 +39,6 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
-          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   scrape-local:
     runs-on: ubuntu-latest
@@ -62,9 +56,6 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
-          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   scrape-cruise:
     runs-on: ubuntu-latest
@@ -82,9 +73,6 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
-          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   scrape-teaching-abroad:
     runs-on: ubuntu-latest
@@ -102,6 +90,3 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
-          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
