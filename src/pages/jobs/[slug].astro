@@ -80,9 +80,16 @@ const relatedCategoryLinks = relatedCategorySlugs
       </div>
 
       <div class="mt-6 flex flex-col gap-3 border-y border-slate-100 py-5 sm:flex-row sm:items-center sm:justify-between">
-        <p class="text-sm text-slate-500">
-          {job.deadline ? <>Application deadline: <b class="text-brand-dark">{formatDate(job.deadline)}</b></> : 'Apply as soon as possible'}
-        </p>
+        <div class="text-sm text-slate-500">
+          <p>
+            {job.deadline ? <>Application deadline: <b class="text-brand-dark">{formatDate(job.deadline)}</b></> : 'Apply as soon as possible'}
+          </p>
+          {job.application_method === 'email' && (
+            <p class="mt-1 font-medium text-brand-dark">
+              Email and attach your CV and Cover Letter to <a href={`mailto:${job.application_value}`} class="underline">{job.application_value}</a>, make sure to have the job title as your email subject!
+            </p>
+          )}
+        </div>
         <div class="flex flex-wrap items-center gap-3">
           <a href={applyHref} rel="nofollow noopener" target={job.application_method === 'url' ? '_blank' : undefined} class="btn-primary">
             Apply Now
