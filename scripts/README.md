@@ -154,3 +154,67 @@ as a guarantee for cache hits and template fallback, not as the only fix.
    only for genuinely new rows (`isNew` — skip on updates to avoid re-paying for
    enhancement on every rerun).
 3. Nothing else changes — the detail page already reads `ai_enhancement` generically.
+
+### `companyInsights` and generic/placeholder employer names
+
+Some scraped jobs (mainly NGO/ReliefWeb listings) don't have a real employer name — they
+fall back to a generic placeholder instead: `cleanCompanyName()` in `text-utils.ts` returns
+`'Confidential Employer'` when the raw name is blank, and `ngo-sources.ts`'s own extraction
+falls back to `'NGO/International Organization'` when it can't find one. Asking the AI to
+write "insights about the employer" the same way regardless of which case it's in risks
+confidently-worded fabricated claims about a company that isn't actually named — bad for
+trust.
+
+`buildPrompt()` in `lib/ai-enhance.ts` detects these generic names (`GENERIC_COMPANY_NAMES`
+set) and branches the `companyInsights` instruction:
+- **Real company name** → write specific insight grounded in that company, including
+  genuine advantages of working there as an employee.
+- **Generic/placeholder name** → explicitly told not to invent a specific company identity,
+  reputation, or history — write general, honest insight about that *type* of
+  employer/role instead, based on the job's actual title/description.
+
+The AI is still free to name a *real* organisation it can infer from the job's own text (e.g.
+a job titled "... RLRH" with "About the Refugee-Led Research Hub..." in the description gets
+insight naming RLRH specifically) even when the stored `company_name` column itself is still
+the generic placeholder — the branch only controls what happens when no real name is
+inferable at all.
+
+### Historical gap: jobs scraped before this feature existed never auto-backfill
+
+The historical one-time backfill (`import-legacy-jobs.ts`, full re-run) only re-processes
+rows sourced from the old Next.js site's legacy JSON — it does not touch rows the *ongoing*
+scrapers had already written to Supabase before a given `ai-enhance.ts`/`template-fallbacks.ts`
+change landed. Combined with the fact that ongoing scrapers only call `liveEnhance()` for
+genuinely new rows (never re-enhance existing ones on rerun), any job scraped live in the
+gap between "row inserted" and "feature added" is permanently stuck on its old, thinner
+`ai_enhancement` shape unless someone explicitly re-runs enhancement for it.
+
+Found 2026-07-29: 42 such rows existed sitewide (15 in `ngo-jobs`, the rest scattered across
+`sales-marketing-jobs`, `online-remote-jobs`, `accounting-finance-jobs`,
+`admin-secretarial-jobs`, `engineering-construction-jobs`, `driving-logistics-jobs`,
+`hospitality-tourism-jobs`, `internships-graduate-trainee`, `teaching-jobs-abroad`,
+`cruise-ship-jobs`) — all missing the 5 depth sections entirely (not just empty strings, the
+keys were absent from the JSON), scraped before that feature existed. Fixed with a one-off
+script (dry-run first, then a real write) that called `liveEnhance()` fresh on each and
+overwrote `ai_enhancement`. This was a one-time catch-up, not a recurring job — if this
+pattern recurs after a future `ai-enhance.ts` change, the fix is the same: find rows with
+`ai_enhancement->>careerGrowth is null` (or whichever new field was added) among approved
+jobs and re-run `liveEnhance()` on them.
+
+Also found and fixed the same day: 12 rows live under `ngo-jobs` with `status='approved'`
+were not real jobs — procurement "Terms of Reference" documents from ReliefWeb (cleaning
+services, medical cover, fund manager appointments, audits, etc). `isLikelyNonJobListing()`
+in `text-utils.ts` already filters exactly this pattern and is wired into the live NGO
+scraper, so no new ones get in — but these 12 predated that filter and were never
+retroactively caught. Flipped their `status` to `'rejected'` directly (same status value the
+admin-reject action uses).
+
+### AI provider keys — `.env` vs GitHub Actions secrets
+
+`OPENAI_API_KEY`/`CLAUDE_API_KEY`/`PERPLEXITY_API_KEY`/`OPENROUTER_API_KEY` in
+`jobboard/.env` (gitignored) are what plain `npx tsx scripts/scrape-*.ts` runs from this
+machine read. The scheduled cron (`.github/workflows/scrape-jobs.yml`) does **not** read
+`.env` at all — it reads `secrets.OPENAI_API_KEY` etc. from the GitHub repo's own Actions
+secrets store (repo → Settings → Secrets and variables → Actions), a completely separate
+place. Adding a key to one does not add it to the other — both need to be kept in sync
+manually if live AI enhancement should apply to both local runs and the scheduled cron.

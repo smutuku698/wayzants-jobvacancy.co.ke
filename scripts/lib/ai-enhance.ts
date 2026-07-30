@@ -256,6 +256,18 @@ async function saveToCache(supabase: SupabaseClient, normalizedTitle: string, ca
   await supabase.from('ai_enhancement_cache').insert({ normalized_title: normalizedTitle, category_slug: categorySlug, payload });
 }
 
+// Placeholder employer names the scrapers themselves fall back to when the
+// real employer can't be extracted (see cleanCompanyName() in text-utils.ts
+// and the NGO scraper's own fallback) — asking the AI to write "insights"
+// about one of these as if it were a real, specific company would produce
+// confident-sounding fabricated claims about an employer that isn't actually
+// named, which reads as untrustworthy rather than genuinely useful.
+const GENERIC_COMPANY_NAMES = new Set(['confidential employer', 'ngo/international organization']);
+
+function isGenericCompanyName(company: string): boolean {
+  return !company.trim() || GENERIC_COMPANY_NAMES.has(company.trim().toLowerCase());
+}
+
 function buildPrompt(job: EnhanceInput): string {
   const isAbroad = ABROAD_PLACEMENT_CATEGORY_SLUGS.has(job.categorySlug);
   const salaryInstruction = isAbroad
@@ -264,8 +276,11 @@ function buildPrompt(job: EnhanceInput): string {
   const contextInstruction = isAbroad
     ? 'kenyaContext (1-2 sentence string with practical advice for a Kenyan applicant relocating abroad for this specific role — visa/work-permit process, what to verify before accepting, cultural/logistics tips — NOT local Kenya salary or market context, since this job is not in Kenya)'
     : 'kenyaContext (1-2 sentence string with practical Kenya-market advice for this role)';
+  const companyInsightsInstruction = isGenericCompanyName(job.company)
+    ? 'companyInsights (2-3 sentence paragraph — the specific employer name is not available for this listing (it is only listed generically, e.g. "Confidential Employer" or "NGO/International Organization"), so do NOT invent a specific company name, reputation, history, or other fabricated details about an employer we do not actually know. Instead write genuinely useful general insight about what it is typically like to work for this type of organisation/employer in this field, based on the role and description given)'
+    : "companyInsights (2-3 sentence paragraph about this specific employer, grounded in the actual company name and description given — what they do, their scale/reputation if apparent, and genuine advantages of working there as an employee)";
 
-  return `You write concise job enhancement metadata for a Kenyan job board. Given this job, respond with ONLY a JSON object (no markdown fences) with keys: skills (string array, max 6), careerLevel (string, e.g. "Entry Level"/"Mid Level"/"Senior Level"), ${salaryInstruction}, metaDescription (string, <=155 chars), applicationTips (string array, max 5), ${contextInstruction}, jobSummary (2-3 sentence plain-language overview of the role), companyInsights (2-3 sentence paragraph about the employer/organisation, inferred from the description — what they do, their scale/reputation if apparent), careerGrowth (2-3 sentence paragraph on typical career progression from this kind of role), workEnvironment (2-3 sentence paragraph on the likely day-to-day work environment and culture for this role), benefits (2-3 sentence paragraph on likely benefits/compensation beyond base salary for this kind of role — be honest if the description doesn't specify any, keep it general), marketContext (2-3 sentence paragraph on demand/outlook for this kind of role). All the paragraph fields should be genuinely informative, not generic filler — ground them in the actual title/description given.
+  return `You write concise job enhancement metadata for a Kenyan job board. Given this job, respond with ONLY a JSON object (no markdown fences) with keys: skills (string array, max 6), careerLevel (string, e.g. "Entry Level"/"Mid Level"/"Senior Level"), ${salaryInstruction}, metaDescription (string, <=155 chars), applicationTips (string array, max 5), ${contextInstruction}, jobSummary (2-3 sentence plain-language overview of the role), ${companyInsightsInstruction}, careerGrowth (2-3 sentence paragraph on typical career progression from this kind of role), workEnvironment (2-3 sentence paragraph on the likely day-to-day work environment and culture for this role), benefits (2-3 sentence paragraph on likely benefits/compensation beyond base salary for this kind of role — be honest if the description doesn't specify any, keep it general), marketContext (2-3 sentence paragraph on demand/outlook for this kind of role). All the paragraph fields should be genuinely informative, not generic filler — ground them in the actual title/description given.
 
 Title: ${job.title}
 Company: ${job.company}
