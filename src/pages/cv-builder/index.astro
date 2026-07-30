@@ -3,11 +3,15 @@ import Layout from '../../layouts/Layout.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import DiamondBackdrop from '../../components/cv-builder/DiamondBackdrop.astro';
 import { CV_PRICING_TIERS, CV_ADDONS } from '../../lib/cv-orders';
-import { CV_TEMPLATES } from '../../lib/cv-templates';
+import { CV_TEMPLATES, WHATSAPP_NUMBER } from '../../lib/cv-templates';
 import { faqJsonLd } from '../../lib/seo';
 
 const templateId = Astro.url.searchParams.get('template') ?? '';
 const template = CV_TEMPLATES.find((t) => t.id === templateId) ?? null;
+
+function tierClarificationWaLink(tierName: string) {
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(`Hi! I have a question about the "${tierName}" CV package on JobVacancy.co.ke before I order.`)}`;
+}
 
 const title = 'Build Your CV — ATS-Optimized CV & Resume Writing | JobVacancy.co.ke';
 const description =
@@ -115,7 +119,7 @@ const faqSchema = faqJsonLd(FAQS.map((f) => ({ question: f.q, answer: f.a })));
         </div>
         <div>
           <div class="text-brand-orange">&#9670; &#9670;</div>
-          <b>PDF or Word</b><br />delivered to you
+          <b>PDF &amp; Word</b><br />delivered to you
         </div>
       </div>
     </div>
@@ -142,28 +146,22 @@ const faqSchema = faqJsonLd(FAQS.map((f) => ({ question: f.q, answer: f.a })));
             <p class="text-xs font-bold uppercase tracking-wide text-slate-400">{tier.emoji} {tier.subtitle}</p>
             <h3 class="mt-1 text-lg font-bold text-brand-dark">{tier.name}</h3>
             <p class="mt-2 text-sm text-slate-500">{tier.tagline}</p>
-            <div class="mt-4" data-tier-price-block={tier.id} data-base-price={tier.priceKes}>
-              <p class="text-3xl font-extrabold text-brand-dark" data-price-display>KES {tier.priceKes.toLocaleString()}</p>
-              <p class="hidden text-xs font-semibold text-brand-orange" data-addon-note></p>
-            </div>
+            <p class="mt-4 text-3xl font-extrabold text-brand-dark">KES {tier.priceKes.toLocaleString()}</p>
             <p class="mt-1 text-xs text-slate-400">Delivery: {tier.deliveryTime}</p>
 
             <ul class="mt-4 flex-1 space-y-2 text-xs text-slate-600 sm:text-sm">
               {tier.includes.map((item) => <li>&#10003; {item}</li>)}
+              <li>
+                <a href={tierClarificationWaLink(tier.name)} target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 font-semibold text-brand-green-dark hover:underline">
+                  &#128172; Need clarification? Chat on WhatsApp
+                </a>
+              </li>
             </ul>
             <p class="mt-3 text-xs font-semibold text-brand-dark">{tier.revisionsText}</p>
 
-            <div class="mt-6 space-y-2">
-              <a href={`/cv-builder/wizard/?tier=${tier.id}`} data-tier={tier.id} data-link-kind="wizard" class="btn-primary block w-full text-center">
-                Answer a Few Questions
-              </a>
-              <a href={`/cv-builder/upload/?tier=${tier.id}`} data-tier={tier.id} data-link-kind="upload" class="btn-secondary block w-full text-center">
-                Upload My Existing CV
-              </a>
-              <a href="/cv-and-resume-services/" class="block w-full text-center text-sm font-semibold text-brand-orange hover:underline">
-                Check CV Designs &rarr;
-              </a>
-            </div>
+            <a href={`/cv-builder/start/?tier=${tier.id}`} data-tier={tier.id} class="btn-primary mt-6 block w-full text-center">
+              Choose This Plan
+            </a>
           </div>
         ))}
       </div>
@@ -172,21 +170,24 @@ const faqSchema = faqJsonLd(FAQS.map((f) => ({ question: f.q, answer: f.a })));
         Payment is by M-Pesa. Your details are only saved once payment is confirmed — nothing is
         sent to our writers until then.
       </p>
+      <p class="mx-auto mt-3 text-center text-sm">
+        <a href="/cv-and-resume-services/" class="font-semibold text-brand-orange hover:underline">See CV Theme Examples &rarr;</a>
+      </p>
     </div>
   </section>
 
-  <!-- Add-ons / upgrades -->
+  <!-- Add-ons / upgrades (preview only — actually selected at checkout, right before payment) -->
   <section class="relative overflow-hidden bg-cream py-16">
     <div class="relative mx-auto max-w-3xl px-4 sm:px-6">
       <div class="text-center">
         <h2 class="text-2xl font-bold text-brand-dark sm:text-3xl">&#9889; Available Upgrades &amp; Add-ons</h2>
-        <p class="mt-2 text-sm text-slate-500">Optional — tick any that apply to any plan above. Your total updates automatically.</p>
+        <p class="mt-2 text-sm text-slate-500">Optional, on any plan — you'll pick these at checkout, right before you pay, once your total is clear.</p>
       </div>
 
       <div class="card mt-8 divide-y divide-slate-100 p-2">
         {CV_ADDONS.map((addon) => (
-          <label class="addon-label flex cursor-pointer items-start gap-3 rounded-lg p-4 transition-colors">
-            <input type="checkbox" class="addon-checkbox mt-1 h-4 w-4 rounded border-slate-300 text-brand-orange focus:ring-brand-orange" value={addon.id} />
+          <div class="flex items-start gap-3 p-4">
+            <span class="mt-1 shrink-0 text-brand-orange" aria-hidden="true">&#9670;</span>
             <span class="flex-1">
               <span class="flex flex-wrap items-center justify-between gap-2">
                 <span class="font-semibold text-brand-dark">{addon.name}</span>
@@ -194,12 +195,9 @@ const faqSchema = faqJsonLd(FAQS.map((f) => ({ question: f.q, answer: f.a })));
               </span>
               <span class="mt-1 block text-sm text-slate-500">{addon.description}</span>
             </span>
-            <span class="addon-check hidden shrink-0 text-brand-green" aria-hidden="true">&#10003;</span>
-          </label>
+          </div>
         ))}
       </div>
-
-      <p id="addons-total" class="mt-4 text-center text-sm font-semibold text-brand-dark">No add-ons selected — tick a box above to add it to every plan's price</p>
     </div>
   </section>
 
@@ -211,7 +209,7 @@ const faqSchema = faqJsonLd(FAQS.map((f) => ({ question: f.q, answer: f.a })));
         {[
           { step: 'Step 1', title: 'Tell Us About You', body: 'Answer a short set of guided questions, or upload your existing CV — whichever is easier.' },
           { step: 'Step 2', title: 'Pay Securely by M-Pesa', body: "Choose your plan and pay with M-Pesa. We only receive your details once payment is confirmed." },
-          { step: 'Step 3', title: 'Get Your CV', body: 'A real writer prepares your ATS-optimized CV and delivers it to you as PDF (or PDF + Word, depending on plan).' },
+          { step: 'Step 3', title: 'Get Your CV', body: 'A real writer prepares your ATS-optimized CV and delivers it to you as PDF and Word.' },
         ].map((s) => (
           <div class="card p-6 text-left">
             <p class="text-sm font-semibold text-brand-green-dark">{s.step}</p>
@@ -246,59 +244,12 @@ const faqSchema = faqJsonLd(FAQS.map((f) => ({ question: f.q, answer: f.a })));
     </div>
   </section>
 
-  <script define:vars={{ templateId, addonPrices: Object.fromEntries(CV_ADDONS.map((a) => [a.id, a.priceKes])) }}>
-    const addonCheckboxes = Array.from(document.querySelectorAll('.addon-checkbox'));
-    const totalEl = document.getElementById('addons-total');
-    const links = Array.from(document.querySelectorAll('[data-tier]'));
-    const priceBlocks = Array.from(document.querySelectorAll('[data-tier-price-block]'));
-
-    function selectedAddons() {
-      return addonCheckboxes.filter((cb) => cb.checked).map((cb) => cb.value);
+  <script define:vars={{ templateId }}>
+    // Carry the selected design template (if any) through to the plan-chooser page.
+    if (templateId) {
+      document.querySelectorAll('[data-tier]').forEach((el) => {
+        el.href = `/cv-builder/start/?tier=${el.dataset.tier}&template=${encodeURIComponent(templateId)}`;
+      });
     }
-
-    function updateAll() {
-      const addons = selectedAddons();
-      const addonsTotal = addons.reduce((sum, id) => sum + (addonPrices[id] || 0), 0);
-
-      // 1. Rewrite every tier's CTA links so the addons carry through to the wizard/upload page.
-      links.forEach((el) => {
-        const params = new URLSearchParams();
-        params.set('tier', el.dataset.tier);
-        if (templateId) params.set('template', templateId);
-        if (addons.length) params.set('addons', addons.join(','));
-        el.href = `/cv-builder/${el.dataset.linkKind}/?${params.toString()}`;
-      });
-
-      // 2. Visibly update each plan's displayed price — this is the part that actually shows
-      // the checkbox did something, instead of only a small total line at the bottom.
-      priceBlocks.forEach((block) => {
-        const base = Number(block.dataset.basePrice);
-        const display = block.querySelector('[data-price-display]');
-        const note = block.querySelector('[data-addon-note]');
-        if (addonsTotal > 0) {
-          display.textContent = `KES ${(base + addonsTotal).toLocaleString()}`;
-          note.textContent = `KES ${base.toLocaleString()} + KES ${addonsTotal.toLocaleString()} add-ons`;
-          note.classList.remove('hidden');
-        } else {
-          display.textContent = `KES ${base.toLocaleString()}`;
-          note.classList.add('hidden');
-        }
-      });
-
-      // 3. Summary line + a visible checkmark/highlight on each ticked add-on row.
-      totalEl.textContent = addonsTotal > 0
-        ? `Add-ons selected: +KES ${addonsTotal.toLocaleString()} on every plan above`
-        : "No add-ons selected — tick a box above to add it to every plan's price";
-    }
-
-    addonCheckboxes.forEach((cb) => {
-      cb.addEventListener('change', () => {
-        const label = cb.closest('.addon-label');
-        label.classList.toggle('bg-brand-orange/5', cb.checked);
-        label.querySelector('.addon-check').classList.toggle('hidden', !cb.checked);
-        updateAll();
-      });
-    });
-    updateAll();
   </script>
 </Layout>

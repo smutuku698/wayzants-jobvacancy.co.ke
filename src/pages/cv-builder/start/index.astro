@@ -1,0 +1,72 @@
+---
+export const prerender = false;
+import Layout from '../../../layouts/Layout.astro';
+import Breadcrumbs from '../../../components/Breadcrumbs.astro';
+import DiamondBackdrop from '../../../components/cv-builder/DiamondBackdrop.astro';
+import { getPricingTier } from '../../../lib/cv-orders';
+import { CV_TEMPLATES, WHATSAPP_NUMBER } from '../../../lib/cv-templates';
+
+const tierId = Astro.url.searchParams.get('tier') ?? '';
+const tier = getPricingTier(tierId);
+
+if (!tier) {
+  return Astro.redirect('/cv-builder/');
+}
+
+const templateId = Astro.url.searchParams.get('template') ?? '';
+const template = CV_TEMPLATES.find((t) => t.id === templateId) ?? null;
+const templateQuery = template ? `&template=${encodeURIComponent(template.id)}` : '';
+
+const clarificationWaLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(`Hi! I have a question about the "${tier.name}" CV package on JobVacancy.co.ke before I order.`)}`;
+
+const title = `${tier.name} — Get Started | JobVacancy.co.ke`;
+const description = "Answer a few guided questions, or upload your existing CV — we'll write your ATS-optimized CV either way.";
+---
+
+<Layout title={title} description={description} path="/cv-builder/start/" noindex>
+  <Breadcrumbs items={[{ name: 'Home', href: '/' }, { name: 'CV & Resume Services', href: '/cv-builder/' }, { name: 'Get Started' }]} />
+
+  <section class="relative overflow-hidden bg-cream py-12">
+    <DiamondBackdrop variant="scatter" />
+    <div class="relative mx-auto max-w-2xl px-4 sm:px-6">
+      <div class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-white px-4 py-3 text-sm">
+        <span class="font-semibold text-brand-dark">
+          Plan: <span class="text-brand-orange">{tier.emoji} {tier.name}</span> — KES {tier.priceKes.toLocaleString()}
+          {template && <> &middot; Design: <span class="text-brand-orange">{template.title}</span></>}
+        </span>
+        <a href="/cv-builder/" class="font-semibold text-brand-orange hover:underline">Change plan</a>
+      </div>
+
+      <div class="mt-8 text-center">
+        <h1 class="text-2xl font-extrabold text-brand-dark sm:text-3xl">How would you like to start?</h1>
+        <p class="mt-2 text-slate-600">Either way, a real writer prepares your ATS-optimized CV — pick whichever is easier for you.</p>
+      </div>
+
+      <div class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2">
+        <a href={`/cv-builder/wizard/?tier=${tier.id}${templateQuery}`} class="card group flex flex-col p-6 text-center transition-shadow hover:shadow-md">
+          <span class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-orange/10 text-2xl text-brand-orange">📝</span>
+          <h2 class="mt-4 text-lg font-bold text-brand-dark">Answer a Few Questions</h2>
+          <p class="mt-2 flex-1 text-sm text-slate-500">
+            A short guided form — personal details, education, experience, skills. Nothing to type up beforehand.
+          </p>
+          <span class="btn-primary mt-5 w-full">Start the Questions</span>
+        </a>
+
+        <a href={`/cv-builder/upload/?tier=${tier.id}${templateQuery}`} class="card group flex flex-col p-6 text-center transition-shadow hover:shadow-md">
+          <span class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-green/15 text-2xl text-brand-green-dark">📄</span>
+          <h2 class="mt-4 text-lg font-bold text-brand-dark">Upload My Existing CV</h2>
+          <p class="mt-2 flex-1 text-sm text-slate-500">
+            Already have a CV? Send it to us with a few details and we'll rework it — no re-typing required.
+          </p>
+          <span class="btn-secondary mt-5 w-full">Upload My CV</span>
+        </a>
+      </div>
+
+      <p class="mt-8 text-center text-sm">
+        <a href={clarificationWaLink} target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 font-semibold text-brand-green-dark hover:underline">
+          &#128172; Need clarification first? Chat on WhatsApp
+        </a>
+      </p>
+    </div>
+  </section>
+</Layout>

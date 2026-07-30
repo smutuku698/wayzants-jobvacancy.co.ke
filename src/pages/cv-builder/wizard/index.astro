@@ -3,7 +3,7 @@ export const prerender = false;
 import Layout from '../../../layouts/Layout.astro';
 import Breadcrumbs from '../../../components/Breadcrumbs.astro';
 import DiamondBackdrop from '../../../components/cv-builder/DiamondBackdrop.astro';
-import { getPricingTier, resolveAddons, getAddon } from '../../../lib/cv-orders';
+import { getPricingTier, CV_ADDONS } from '../../../lib/cv-orders';
 import { CV_TEMPLATES } from '../../../lib/cv-templates';
 
 const tierId = Astro.url.searchParams.get('tier') ?? '';
@@ -15,10 +15,6 @@ if (!tier) {
 
 const templateId = Astro.url.searchParams.get('template') ?? '';
 const template = CV_TEMPLATES.find((t) => t.id === templateId) ?? null;
-
-const addonsParam = Astro.url.searchParams.get('addons') ?? '';
-const { addons, addonsTotalKes } = resolveAddons(addonsParam.split(',').filter(Boolean));
-const totalKes = tier.priceKes + addonsTotalKes;
 
 const title = `Build Your CV — ${tier.name} | JobVacancy.co.ke`;
 const description = 'Answer a few guided questions and we\'ll write your ATS-optimized CV.';
@@ -45,12 +41,6 @@ const STEPS = [
         <span class="font-semibold text-brand-dark">
           Plan: <span class="text-brand-orange">{tier.name}</span> — KES {tier.priceKes.toLocaleString()}
           {template && <> &middot; Template: <span class="text-brand-orange">{template.title}</span></>}
-          {addons.length > 0 && (
-            <>
-              {' '}&middot; Add-ons: {addons.map((id) => getAddon(id)?.name).join(', ')} (+KES {addonsTotalKes.toLocaleString()})
-            </>
-          )}
-          {addons.length > 0 && <> &middot; <b>Total: KES {totalKes.toLocaleString()}</b></>}
         </span>
         <a href="/cv-builder/" class="font-semibold text-brand-orange hover:underline">Change plan</a>
       </div>
@@ -186,6 +176,30 @@ const STEPS = [
           <div id="review-summary" class="mt-5 space-y-5"></div>
 
           <div class="mt-6 border-t border-slate-100 pt-6">
+            <h3 class="text-sm font-bold uppercase tracking-wide text-slate-500">&#9889; Optional Add-ons</h3>
+            <p class="mt-1 text-xs text-slate-500">Tick any that apply — your total below updates automatically.</p>
+            <div class="mt-3 divide-y divide-slate-100 overflow-hidden rounded-lg border border-slate-200">
+              {CV_ADDONS.map((addon) => (
+                <label class="addon-label flex cursor-pointer items-start gap-3 p-3 transition-colors">
+                  <input type="checkbox" class="addon-checkbox mt-1 h-4 w-4 rounded border-slate-300 text-brand-orange focus:ring-brand-orange" value={addon.id} data-price={addon.priceKes} />
+                  <span class="flex-1">
+                    <span class="flex flex-wrap items-center justify-between gap-2">
+                      <span class="text-sm font-semibold text-brand-dark">{addon.name}</span>
+                      <span class="text-sm font-bold text-brand-orange">+ KES {addon.priceKes.toLocaleString()}</span>
+                    </span>
+                    <span class="mt-0.5 block text-xs text-slate-500">{addon.description}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div class="mt-6 flex items-center justify-between rounded-lg bg-cream px-4 py-3">
+            <span class="text-sm font-semibold text-brand-dark">Total</span>
+            <span id="order-total" class="text-lg font-extrabold text-brand-dark">KES {tier.priceKes.toLocaleString()}</span>
+          </div>
+
+          <div class="mt-6 border-t border-slate-100 pt-6">
             <label class="mb-1.5 block text-sm font-semibold text-brand-dark">M-Pesa Phone Number *</label>
             <input id="mpesa-phone" required type="tel" inputmode="tel" placeholder="e.g. 0722 123 456" class="w-full max-w-xs rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-brand-orange" />
             <p id="mpesa-phone-error" class="mt-1 hidden text-xs text-red-600">Enter a valid Safaricom/Airtel number.</p>
@@ -198,7 +212,7 @@ const STEPS = [
           <button type="button" id="wizard-back-btn" class="btn-secondary" disabled>Back</button>
           <button type="button" id="wizard-next-btn" class="btn-primary">Next</button>
           <button type="button" id="wizard-pay-btn" class="btn-primary hidden">
-            Pay KES {totalKes.toLocaleString()} &amp; Submit
+            Pay KES {tier.priceKes.toLocaleString()} &amp; Submit
           </button>
         </div>
       </form>
@@ -281,7 +295,7 @@ const STEPS = [
     </div>
   </template>
 
-  <script define:vars={{ tierId: tier.id, templateId: template?.id ?? '', addonsCsv: addons.join(','), stepLabels: STEPS }}>
+  <script define:vars={{ tierId: tier.id, templateId: template?.id ?? '', tierPriceKes: tier.priceKes, stepLabels: STEPS }}>
     const TOTAL_STEPS = stepLabels.length;
     const DRAFT_KEY = 'jv-cv-wizard-draft-v1';
     const KE_PHONE_RE = /^(?:\+?254|0)([17]\d{8})$/;
@@ -292,8 +306,31 @@ const STEPS = [
     const backBtn = document.getElementById('wizard-back-btn');
     const nextBtn = document.getElementById('wizard-next-btn');
     const payBtn = document.getElementById('wizard-pay-btn');
+    const addonCheckboxes = Array.from(document.querySelectorAll('.addon-checkbox'));
+    const orderTotalEl = document.getElementById('order-total');
 
     let currentStep = 1;
+
+    function selectedAddons() {
+      return addonCheckboxes.filter((cb) => cb.checked).map((cb) => cb.value);
+    }
+
+    function updateOrderTotal() {
+      const addonsTotal = addonCheckboxes
+        .filter((cb) => cb.checked)
+        .reduce((sum, cb) => sum + Number(cb.dataset.price || 0), 0);
+      const total = tierPriceKes + addonsTotal;
+      orderTotalEl.textContent = `KES ${total.toLocaleString()}`;
+      payBtn.textContent = payBtn.disabled ? payBtn.textContent : `Pay KES ${total.toLocaleString()} & Submit`;
+    }
+
+    addonCheckboxes.forEach((cb) => {
+      cb.addEventListener('change', () => {
+        cb.closest('.addon-label').classList.toggle('bg-brand-orange/5', cb.checked);
+        updateOrderTotal();
+        saveDraft();
+      });
+    });
 
     function fieldsIn(container) {
       return Array.from(container.querySelectorAll('[data-field]'));
@@ -521,7 +558,7 @@ const STEPS = [
       fd.set('path_type', 'form');
       fd.set('tier', tierId);
       fd.set('template_id', templateId);
-      fd.set('addons', addonsCsv);
+      fd.set('addons', selectedAddons().join(','));
       fd.set('contact_name', personal.full_name);
       fd.set('contact_phone', personal.phone);
       fd.set('contact_email', personal.email);
@@ -539,7 +576,7 @@ const STEPS = [
         submitError.textContent = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
         submitError.classList.remove('hidden');
         payBtn.disabled = false;
-        payBtn.textContent = `Pay & Submit`;
+        updateOrderTotal();
       }
     });
 
