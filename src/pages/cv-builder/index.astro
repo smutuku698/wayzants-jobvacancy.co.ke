@@ -4,7 +4,7 @@ import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import DiamondBackdrop from '../../components/cv-builder/DiamondBackdrop.astro';
 import { CV_PRICING_TIERS, CV_ADDONS } from '../../lib/cv-orders';
 import { CV_TEMPLATES, WHATSAPP_NUMBER } from '../../lib/cv-templates';
-import { faqJsonLd } from '../../lib/seo';
+import { faqJsonLd, breadcrumbJsonLd, serviceJsonLd, SITE_URL } from '../../lib/seo';
 
 const templateId = Astro.url.searchParams.get('template') ?? '';
 const template = CV_TEMPLATES.find((t) => t.id === templateId) ?? null;
@@ -89,10 +89,24 @@ const FAQS = [
 ];
 
 const faqSchema = faqJsonLd(FAQS.map((f) => ({ question: f.q, answer: f.a })));
+
+const breadcrumbItems = [{ name: 'Home', href: '/' }, { name: 'CV & Resume Services' }];
+const breadcrumbSchema = breadcrumbJsonLd(
+  breadcrumbItems.map((b) => ({ name: b.name, url: b.href ? new URL(b.href, SITE_URL).toString() : Astro.url.toString() }))
+);
+
+const serviceSchema = serviceJsonLd({
+  name: 'CV & Resume Writing Service',
+  description,
+  areaServed: 'KE',
+  offers: CV_PRICING_TIERS.map((t) => ({ name: t.name, description: t.tagline, priceKes: t.priceKes })),
+});
+
+const jsonLd = [faqSchema, breadcrumbSchema, serviceSchema];
 ---
 
-<Layout title={title} description={description} path="/cv-builder/" jsonLd={faqSchema}>
-  <Breadcrumbs items={[{ name: 'Home', href: '/' }, { name: 'CV & Resume Services' }]} />
+<Layout title={title} description={description} path="/cv-builder/" jsonLd={jsonLd}>
+  <Breadcrumbs items={breadcrumbItems} />
 
   <!-- Hero -->
   <section class="relative overflow-hidden bg-cream">

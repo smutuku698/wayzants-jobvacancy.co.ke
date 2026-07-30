@@ -2,6 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import { CV_TEMPLATES, SIMPLE_CV_EXAMPLE, WHATSAPP_NUMBER } from '../../lib/cv-templates';
+import { breadcrumbJsonLd, SITE_URL } from '../../lib/seo';
 
 function waLink(message: string) {
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
@@ -17,10 +18,15 @@ const genericWaLink = waLink('Hi! I am interested in getting a professional CV d
 const title = 'CV & Resume Writing Services in Kenya — Professional CV Writers | JobVacancy.co.ke';
 const description =
   'Browse real CV and resume design templates for every industry in Kenya. Pick a style and we\'ll write and design an ATS-optimized CV for you, delivered as PDF or Word.';
+
+const breadcrumbItems = [{ name: 'Home', href: '/' }, { name: 'CV & Resume Services', href: '/cv-builder/' }, { name: 'CV Designs' }];
+const breadcrumbSchema = breadcrumbJsonLd(
+  breadcrumbItems.map((b) => ({ name: b.name, url: b.href ? new URL(b.href, SITE_URL).toString() : Astro.url.toString() }))
+);
 ---
 
-<Layout title={title} description={description} path="/cv-and-resume-services/">
-  <Breadcrumbs items={[{ name: 'Home', href: '/' }, { name: 'CV & Resume Services', href: '/cv-builder/' }, { name: 'CV Designs' }]} />
+<Layout title={title} description={description} path="/cv-and-resume-services/" jsonLd={breadcrumbSchema}>
+  <Breadcrumbs items={breadcrumbItems} />
 
   <div class="mx-auto max-w-6xl px-4 py-8 sm:px-6">
     <div class="mx-auto max-w-3xl text-center">
@@ -48,7 +54,7 @@ const description =
           <div class="aspect-[3/4] overflow-hidden bg-cream">
             <img
               src={SIMPLE_CV_EXAMPLE.image}
-              alt={SIMPLE_CV_EXAMPLE.title}
+              alt={`${SIMPLE_CV_EXAMPLE.title} — ${SIMPLE_CV_EXAMPLE.description}`}
               loading="lazy"
               class="h-full w-full object-cover object-top transition-transform group-hover:scale-105"
             />
@@ -80,7 +86,7 @@ const description =
                 <div class="relative aspect-[3/4] overflow-hidden bg-cream">
                   <img
                     src={t.image}
-                    alt={t.title}
+                    alt={`${t.title} — ${t.description}`}
                     loading="lazy"
                     class="h-full w-full object-cover object-top transition-transform group-hover:scale-105"
                   />

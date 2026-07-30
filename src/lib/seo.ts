@@ -60,6 +60,52 @@ export function faqJsonLd(items: { question: string; answer: string }[]) {
   };
 }
 
+/** Generic Service + OfferCatalog schema — used by the CV builder to expose its priced tiers as
+ * structured data (Google doesn't have a dedicated "CV writing" type, `Service` + `Offer` is the
+ * documented pattern for a priced professional service). Kept generic/parameterized in `seo.ts`
+ * rather than importing `CV_PRICING_TIERS` directly, to avoid this SEO-only module depending on
+ * the CV-orders module's Supabase/KV imports. */
+export function serviceJsonLd(params: {
+  name: string;
+  description: string;
+  areaServed?: string;
+  offers: { name: string; description: string; priceKes: number }[];
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    serviceType: params.name,
+    name: params.name,
+    description: params.description,
+    provider: {
+      '@type': 'Organization',
+      name: SITE_NAME,
+      url: SITE_URL,
+    },
+    areaServed: {
+      '@type': 'Country',
+      name: params.areaServed ?? 'Worldwide',
+    },
+    hasOfferCatalog: {
+      '@type': 'OfferCatalog',
+      name: params.name,
+      itemListElement: params.offers.map((o) => ({
+        '@type': 'Offer',
+        itemOffered: {
+          '@type': 'Service',
+          name: o.name,
+          description: o.description,
+        },
+        priceSpecification: {
+          '@type': 'PriceSpecification',
+          price: o.priceKes,
+          priceCurrency: 'KES',
+        },
+      })),
+    },
+  };
+}
+
 export function websiteJsonLd() {
   return {
     '@context': 'https://schema.org',
