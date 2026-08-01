@@ -34,6 +34,30 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response(null, { status: 200 });
   }
 
+  // talentprep.co.ke shares this Paystack account and tags its own charges
+  // with a `tp_` prefix (distinct from this site's `cv_` — see
+  // CV_ORDER_REF_PREFIX in lib/cv-orders.ts). Only one webhook URL can be
+  // registered per Paystack account, so this one forwards the raw body and
+  // signature verbatim to talentprep's own webhook, which independently
+  // verifies it against the same shared secret — exactly as if Paystack had
+  // sent it there directly. Without this, `tp_`-prefixed references would
+  // fall through to markJobPaymentPaid below, matching no `jobs` row and
+  // silently no-op-ing (Supabase .update().eq() affects zero rows without
+  // erroring), so the payment would never be recorded anywhere.
+  if (reference.startsWith('tp_')) {
+    try {
+      await fetch('https://talentprep.co.ke/api/webhooks/paystack', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-paystack-signature': signature ?? '' },
+        body: rawBody,
+      });
+    } catch {
+      // Swallow — same retry reasoning as below; a transient network error
+      // forwarding this shouldn't cause Paystack to retry-storm this endpoint.
+    }
+    return new Response(null, { status: 200 });
+  }
+
   try {
     if (event.event === 'charge.success') {
       if (isCvOrderReference(reference)) {
