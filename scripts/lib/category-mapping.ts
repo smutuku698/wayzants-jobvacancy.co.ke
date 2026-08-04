@@ -161,7 +161,9 @@ const NAIROBI_ALIASES = [
   'waiyaki way', 'ngara', 'muthaiga', 'runda', 'ruai', 'thika road', 'kagundo',
 ];
 
-const KENYA_LOCATION_SLUGS = ['nairobi', 'mombasa', 'kisumu', 'eldoret', 'nakuru', 'thika', 'nyeri', 'machakos'];
+const KENYA_LOCATION_SLUGS = [
+  'nairobi', 'mombasa', 'kisumu', 'eldoret', 'nakuru', 'thika', 'nyeri', 'machakos', 'kakamega', 'meru', 'naivasha',
+];
 
 const FOREIGN_MARKERS = ['mauritius', 'south africa', 'uganda', 'tanzania', 'rwanda', 'nigeria', 'ghana', 'international'];
 
