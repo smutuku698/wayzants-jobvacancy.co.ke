@@ -9,10 +9,15 @@
   --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
 
   --color-cream: oklch(0.975 0.012 85);
-  --color-brand-orange: oklch(0.72 0.19 45);
-  --color-brand-orange-dark: oklch(0.62 0.19 45);
+  /* Darkened from the original oklch(0.72 0.19 45)/(0.58 0.15 130) — those
+     failed WCAG AA text contrast (~2.5-2.7:1 and 4.07:1 respectively) against
+     the white/cream backgrounds they're used on for links, badges and button
+     text. Same hue/chroma, just lower lightness, so it reads as the same
+     brand orange/green, only legible. */
+  --color-brand-orange: oklch(0.56 0.19 45);
+  --color-brand-orange-dark: oklch(0.46 0.19 45);
   --color-brand-green: oklch(0.78 0.17 130);
-  --color-brand-green-dark: oklch(0.58 0.15 130);
+  --color-brand-green-dark: oklch(0.54 0.15 130);
   --color-brand-yellow: oklch(0.88 0.15 95);
   --color-brand-dark: oklch(0.22 0.02 250);
   --color-highlight: oklch(0.87 0.19 130);
