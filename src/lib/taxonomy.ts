@@ -38,6 +38,9 @@ export const NAV_LOCATIONS: NavItem[] = [
   { slug: 'thika', name: 'Thika' },
   { slug: 'nyeri', name: 'Nyeri' },
   { slug: 'machakos', name: 'Machakos' },
+  { slug: 'kakamega', name: 'Kakamega' },
+  { slug: 'meru', name: 'Meru' },
+  { slug: 'naivasha', name: 'Naivasha' },
   { slug: 'remote-online-kenya', name: 'Remote / Online (Kenya)' },
   { slug: 'international-remote', name: 'International (Remote)' },
 ];

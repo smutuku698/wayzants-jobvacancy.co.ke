@@ -177,6 +177,24 @@ export const LOCATION_CONTENT: Record<string, LandingCopy> = {
     metaTitle: `Jobs in Machakos – Latest Vacancies Today | ${SITE}`,
     metaDescription: 'Find the latest jobs in Machakos, Kenya across all industries, updated daily.',
   },
+  kakamega: {
+    h1: 'Jobs in Kakamega',
+    intro: 'The latest job vacancies in Kakamega and the wider Western region, updated daily.',
+    metaTitle: `Jobs in Kakamega – Latest Vacancies Today | ${SITE}`,
+    metaDescription: 'Find the latest jobs in Kakamega, Kenya across all industries, updated daily.',
+  },
+  meru: {
+    h1: 'Jobs in Meru',
+    intro: 'The latest job vacancies in Meru and the wider Eastern region, updated daily.',
+    metaTitle: `Jobs in Meru – Latest Vacancies Today | ${SITE}`,
+    metaDescription: 'Find the latest jobs in Meru, Kenya across all industries, updated daily.',
+  },
+  naivasha: {
+    h1: 'Jobs in Naivasha',
+    intro: 'The latest job vacancies in Naivasha and the Rift Valley, updated daily.',
+    metaTitle: `Jobs in Naivasha – Latest Vacancies Today | ${SITE}`,
+    metaDescription: 'Find the latest jobs in Naivasha, Kenya across all industries, updated daily.',
+  },
   'remote-online-kenya': {
     h1: 'Remote & Online Jobs in Kenya',
     intro: 'Work-from-home and remote jobs you can do from anywhere in Kenya, updated daily.',

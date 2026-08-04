@@ -16,15 +16,18 @@ import review3 from '../assets/review3.jpg';
 import review4 from '../assets/review4.jpg';
 import onlineLessons from '../assets/online-lessons.jpg';
 
-// These 4 queries are independent of each other (featuredJobs' fallback only
+// These queries are independent of each other (featuredJobs' fallback only
 // needs allJobs once both have already resolved) — running them in parallel
-// instead of as 4 sequential awaits cuts the homepage's Supabase round-trip
-// time roughly 4x.
-const [allJobs, featuredJobsRaw, cruiseJobs, localKenyaJobs] = await Promise.all([
+// instead of as sequential awaits cuts the homepage's Supabase round-trip
+// time roughly 7x.
+const [allJobs, featuredJobsRaw, ngoJobs, cruiseJobs, teachingJobs, remoteJobs, localKenyaJobs] = await Promise.all([
   getLatestJobs(12).catch(() => []),
   getFeaturedJobs(6).catch(() => null),
-  getJobsByCategorySlug('cruise-ship-jobs', 3).catch(() => []),
-  getLatestLocalJobs(3).catch(() => []),
+  getJobsByCategorySlug('ngo-jobs', 6).catch(() => []),
+  getJobsByCategorySlug('cruise-ship-jobs', 6).catch(() => []),
+  getJobsByCategorySlug('teaching-jobs', 6).catch(() => []),
+  getJobsByCategorySlug('online-remote-jobs', 6).catch(() => []),
+  getLatestLocalJobs(6).catch(() => []),
 ]);
 // Paid/featured placements come first; getFeaturedJobs() backfills with the
 // latest approved jobs so this grid is always full, never empty gaps, even
@@ -250,21 +253,28 @@ const faqSchema = faqJsonLd(faqs.map((f) => ({ question: f.q, answer: `${f.a} ${
     </div>
   </section>
 
-  <!-- Categories -->
-  <section class="bg-white py-16">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6">
-      <div class="flex items-end justify-between gap-4">
-        <div>
-          <h2 class="text-2xl font-bold text-brand-dark sm:text-3xl">Browse Jobs by Category</h2>
-          <p class="mt-1 text-slate-500">From NGO and government jobs to teaching, TSC and online work.</p>
+  <!-- Latest local Kenya jobs -->
+  {localKenyaJobs.length > 0 && (
+    <section class="bg-white py-16">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6">
+        <div class="flex items-end justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-bold text-brand-dark sm:text-3xl">Latest Local Jobs in Kenya</h2>
+            <p class="mt-1 text-slate-500">Fresh vacancies based right here in Kenya — Nairobi, Mombasa, Kisumu and beyond.</p>
+          </div>
+          <a href="/jobs/" class="hidden shrink-0 text-sm font-semibold text-brand-orange hover:underline sm:block">View all &rarr;</a>
         </div>
-        <a href="/jobs/" class="hidden shrink-0 text-sm font-semibold text-brand-orange hover:underline sm:block">View all jobs &rarr;</a>
+        <div class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {localKenyaJobs.map((job, i) => (
+            <FeaturedJobCard job={job} accent={FEATURED_ACCENTS[i % FEATURED_ACCENTS.length]} />
+          ))}
+        </div>
+        <div class="mt-8 text-center sm:hidden">
+          <a href="/jobs/" class="btn-secondary">View all local jobs</a>
+        </div>
       </div>
-      <div class="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {NAV_CATEGORIES.map((c) => <CategoryCard slug={c.slug} name={c.name} />)}
-      </div>
-    </div>
-  </section>
+    </section>
+  )}
 
   <!-- Featured jobs -->
   <section class="bg-cream py-16">
@@ -296,9 +306,32 @@ const faqSchema = faqJsonLd(faqs.map((f) => ({ question: f.q, answer: `${f.a} ${
     </div>
   </section>
 
+  <!-- NGO jobs -->
+  {ngoJobs.length > 0 && (
+    <section class="bg-white py-16">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6">
+        <div class="flex items-end justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-bold text-brand-dark sm:text-3xl">NGO Jobs</h2>
+            <p class="mt-1 text-slate-500">Vacancies from UN agencies, international NGOs and local non-profits in Kenya.</p>
+          </div>
+          <a href="/category/ngo-jobs/" class="hidden shrink-0 text-sm font-semibold text-brand-orange hover:underline sm:block">View all &rarr;</a>
+        </div>
+        <div class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {ngoJobs.map((job, i) => (
+            <FeaturedJobCard job={job} accent={FEATURED_ACCENTS[i % FEATURED_ACCENTS.length]} />
+          ))}
+        </div>
+        <div class="mt-8 text-center sm:hidden">
+          <a href="/category/ngo-jobs/" class="btn-secondary">View all NGO jobs</a>
+        </div>
+      </div>
+    </section>
+  )}
+
   <!-- Latest cruise ship jobs -->
   {cruiseJobs.length > 0 && (
-    <section class="bg-white py-16">
+    <section class="bg-cream py-16">
       <div class="mx-auto max-w-7xl px-4 sm:px-6">
         <div class="flex items-end justify-between gap-4">
           <div>
@@ -319,28 +352,67 @@ const faqSchema = faqJsonLd(faqs.map((f) => ({ question: f.q, answer: `${f.a} ${
     </section>
   )}
 
-  <!-- Latest local Kenya jobs -->
-  {localKenyaJobs.length > 0 && (
-    <section class="bg-cream py-16">
+  <!-- Teaching jobs -->
+  {teachingJobs.length > 0 && (
+    <section class="bg-white py-16">
       <div class="mx-auto max-w-7xl px-4 sm:px-6">
         <div class="flex items-end justify-between gap-4">
           <div>
-            <h2 class="text-2xl font-bold text-brand-dark sm:text-3xl">Latest Local Jobs in Kenya</h2>
-            <p class="mt-1 text-slate-500">Fresh vacancies based right here in Kenya — Nairobi, Mombasa, Kisumu and beyond.</p>
+            <h2 class="text-2xl font-bold text-brand-dark sm:text-3xl">Teaching Jobs</h2>
+            <p class="mt-1 text-slate-500">Vacancies in primary schools, secondary schools, colleges and universities across Kenya.</p>
           </div>
-          <a href="/jobs/" class="hidden shrink-0 text-sm font-semibold text-brand-orange hover:underline sm:block">View all &rarr;</a>
+          <a href="/category/teaching-jobs/" class="hidden shrink-0 text-sm font-semibold text-brand-orange hover:underline sm:block">View all &rarr;</a>
         </div>
         <div class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {localKenyaJobs.map((job, i) => (
+          {teachingJobs.map((job, i) => (
             <FeaturedJobCard job={job} accent={FEATURED_ACCENTS[i % FEATURED_ACCENTS.length]} />
           ))}
         </div>
         <div class="mt-8 text-center sm:hidden">
-          <a href="/jobs/" class="btn-secondary">View all local jobs</a>
+          <a href="/category/teaching-jobs/" class="btn-secondary">View all teaching jobs</a>
         </div>
       </div>
     </section>
   )}
+
+  <!-- Remote / international jobs -->
+  {remoteJobs.length > 0 && (
+    <section class="bg-cream py-16">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6">
+        <div class="flex items-end justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-bold text-brand-dark sm:text-3xl">Remote &amp; International Jobs</h2>
+            <p class="mt-1 text-slate-500">Remote and online jobs you can do from anywhere in Kenya, including international employers.</p>
+          </div>
+          <a href="/category/online-remote-jobs/" class="hidden shrink-0 text-sm font-semibold text-brand-orange hover:underline sm:block">View all &rarr;</a>
+        </div>
+        <div class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {remoteJobs.map((job, i) => (
+            <FeaturedJobCard job={job} accent={FEATURED_ACCENTS[i % FEATURED_ACCENTS.length]} />
+          ))}
+        </div>
+        <div class="mt-8 text-center sm:hidden">
+          <a href="/category/online-remote-jobs/" class="btn-secondary">View all remote jobs</a>
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- Categories -->
+  <section class="bg-white py-16">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6">
+      <div class="flex items-end justify-between gap-4">
+        <div>
+          <h2 class="text-2xl font-bold text-brand-dark sm:text-3xl">Browse Jobs by Category</h2>
+          <p class="mt-1 text-slate-500">From NGO and government jobs to teaching, TSC and online work.</p>
+        </div>
+        <a href="/jobs/" class="hidden shrink-0 text-sm font-semibold text-brand-orange hover:underline sm:block">View all jobs &rarr;</a>
+      </div>
+      <div class="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {NAV_CATEGORIES.map((c) => <CategoryCard slug={c.slug} name={c.name} />)}
+      </div>
+    </div>
+  </section>
 
   <!-- Latest jobs -->
   <section class="bg-cream py-16">
