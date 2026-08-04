@@ -41,7 +41,7 @@ export default defineConfig({
     '/jobs-in-kakamega/': '/location/kakamega/',
     '/ngo-jobs-in-kenya/': '/category/ngo-jobs/',
     '/online-jobs-in-kenya/': '/category/online-remote-jobs/',
-    '/teaching-jobs-in-kenya/': '/category/teaching-jobs/',
+    '/teaching-jobs-in-kenya/': '/category/teaching-jobs-abroad/',
     '/cruise-ship-jobs/': '/category/cruise-ship-jobs/',
   },
 });

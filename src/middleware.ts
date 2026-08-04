@@ -1,8 +1,14 @@
 import { defineMiddleware } from 'astro:middleware';
 import { getEnv } from './lib/env';
+import { resolveLegacyRedirect } from './legacy-redirects';
 
 export const onRequest = defineMiddleware(async (context, next) => {
-  const isProtected = context.url.pathname.startsWith('/admin') || context.url.pathname.startsWith('/api/admin');
+  const { pathname } = context.url;
+
+  const legacyTarget = resolveLegacyRedirect(pathname);
+  if (legacyTarget) return context.redirect(legacyTarget, 301);
+
+  const isProtected = pathname.startsWith('/admin') || pathname.startsWith('/api/admin');
   if (!isProtected) return next();
 
   const env = getEnv();
